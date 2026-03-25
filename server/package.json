@@ -1,0 +1,25 @@
+{
+  "name": "japticcards",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/byterand/JapticCards#readme",
+  "bugs": {
+    "url": "https://github.com/byterand/JapticCards/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byterand/JapticCards.git"
+  },
+  "license": "ISC",
+  "author": "Chris Field, Payton Bates, Jacob Radzieta, Aarya Radhan, Irakli Dokhnadze, Tate Barnard",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "seed": "node seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
