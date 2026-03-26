@@ -30,7 +30,7 @@ router.post('/register', registerRules, async (req, res) => {
   try {
     const userExists = await User.findOne({ username });
     if (userExists) {
-      return res.status(409).json({message: 'Username is taken'});
+      return res.status(409).json({ message: 'Username is taken' });
     }
 
     const hashed = await bcrypt.hash(password, saltRounds);
@@ -60,18 +60,18 @@ router.post('/login', loginRules, async (req, res) => {
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({message: 'Invalid credentials'});
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const correctPassword = await bcrypt.compare(password, user.password);
     if (!correctPassword) {
-      return res.status(401).json({message: 'Invalid credentials'});
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = jwt.sign(
-      {userId: user._id, role: user.role},
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {expiresIn: '7d'}
+      { expiresIn: '7d' }
     );
 
     return res.json({token});
