@@ -9,7 +9,8 @@ const router = Router();
 
 const registerRules = [
   body('username').trim().notEmpty().toLowerCase().isLength({ min: 3, max: 20 }).matches(/^[a-z0-9_]+$/),
-  body('password').trim().isLength({ min: 8, max: 25 })
+  body('password').isLength({ min: 8, max: 25 })
+    .not().matches(/\s/).withMessage('Password must not contain spaces')
     .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
     .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
     .matches(/[0-9]/).withMessage('Password must contain at least one number')
@@ -44,7 +45,7 @@ router.post('/register', registerRules, async (req, res) => {
 
 const loginRules = [
   body('username').trim().notEmpty().toLowerCase(),
-  body('password').trim().notEmpty()
+  body('password').notEmpty()
 ];
 
 // POST /login
