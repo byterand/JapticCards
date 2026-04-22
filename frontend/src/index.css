@@ -1,0 +1,130 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #f4f6fb;
+  color: #132038;
+}
+
+a {
+  color: #1a4c9c;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid #d2dae8;
+  background: white;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+}
+
+input, select {
+  width: 100%;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #c9d1de;
+}
+
+label {
+  display: block;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid #dbe2ef;
+  background: #ffffff;
+}
+
+.header nav {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.page {
+  padding: 1.2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.deckRow, .cardRow {
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  padding: 0.7rem;
+  margin-bottom: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.6rem;
+  align-items: end;
+  margin-bottom: 0.8rem;
+}
+
+.error {
+  color: #a21414;
+  background: #fee8e8;
+  border: 1px solid #f4b5b5;
+  padding: 0.55rem;
+  border-radius: 8px;
+}
+
+.flashcard {
+  width: 100%;
+  min-height: 130px;
+  font-size: 1.2rem;
+}
+
+.thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-left: 0.4rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.checkbox input {
+  width: auto;
+  margin: 0;
+}
