@@ -6,6 +6,7 @@ import RevokedToken from '../models/RevokedToken.js';
 import RefreshToken from '../models/RefreshToken.js';
 import { HttpError } from '../utils/HttpError.js';
 import { config } from '../config/env.js';
+import { invalidateJti } from '../utils/revocationCache.js';
 
 const SALT_ROUNDS = 10;
 
@@ -146,6 +147,9 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
       { $setOnInsert: { jti: accessJti, expiresAt } },
       { upsert: true }
     );
+    // Drop any cached "known good" entry so verifyToken can't serve a stale
+    // hit for this jti on subsequent requests.
+    invalidateJti(accessJti);
   }
   if (refreshToken) {
     try {

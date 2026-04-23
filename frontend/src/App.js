@@ -8,7 +8,7 @@ import {
   useNavigate,
   useParams
 } from "react-router-dom";
-import { api } from "./services/api";
+import { api, imageUrl } from "./services/api";
 
 const AuthContext = createContext(null);
 
@@ -359,13 +359,13 @@ function DeckPage() {
     loadDeck();
   }, [loadDeck]);
 
-  async function toBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  async function uploadImage(file) {
+    try {
+      return await api.uploadCardImage(file);
+    } catch (err) {
+      setError(err.message);
+      return "";
+    }
   }
 
   if (!deck) {
@@ -433,7 +433,7 @@ function DeckPage() {
                 type="file"
                 accept="image/*"
                 onChange={async (e) => {
-                  if (e.target.files[0]) setFrontImage(await toBase64(e.target.files[0]));
+                  if (e.target.files[0]) setFrontImage(await uploadImage(e.target.files[0]));
                 }}
               />
             </label>
@@ -443,7 +443,7 @@ function DeckPage() {
                 type="file"
                 accept="image/*"
                 onChange={async (e) => {
-                  if (e.target.files[0]) setBackImage(await toBase64(e.target.files[0]));
+                  if (e.target.files[0]) setBackImage(await uploadImage(e.target.files[0]));
                 }}
               />
             </label>
@@ -476,8 +476,8 @@ function CardEditor({ card, deckId, readOnly, onSaved }) {
     <article className="cardRow">
       <div>
         <strong>{card.front}</strong> -> {card.back}
-        {card.frontImage && <img src={card.frontImage} alt="Front visual" className="thumb" />}
-        {card.backImage && <img src={card.backImage} alt="Back visual" className="thumb" />}
+        {card.frontImage && <img src={imageUrl(card.frontImage)} alt="Front visual" className="thumb" />}
+        {card.backImage && <img src={imageUrl(card.backImage)} alt="Back visual" className="thumb" />}
       </div>
       {!readOnly && (
         <div className="actions">

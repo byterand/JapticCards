@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -12,8 +13,15 @@ app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json());
+
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
+
+app.use('/uploads', express.static(path.resolve('uploads'), {
+  maxAge: '1d',
+  setHeaders: (res) => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+}));
+
 routes(app);
 
 // Must be mounted after routes

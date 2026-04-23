@@ -3,5 +3,6 @@
 
 node_modules/
 frontend/build/
+server/uploads/
 
 .env

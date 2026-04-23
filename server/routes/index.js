@@ -2,6 +2,7 @@ import authRoutes from './auth.js';
 import deckRoutes from './decks.js';
 import studyRoutes from './study.js';
 import teacherRoutes from './teacher.js';
+import uploadRoutes from './uploads.js';
 
 const routes = (app) => {
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -11,6 +12,7 @@ const routes = (app) => {
   app.use('/decks', deckRoutes);
   app.use('/study', studyRoutes);
   app.use('/teacher', teacherRoutes);
+  app.use('/cards', uploadRoutes);
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 };
 

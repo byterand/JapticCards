@@ -1,5 +1,14 @@
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+export function imageUrl(value) {
+  if (!value) return "";
+  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  if (value.startsWith("/")) return `${BASE_URL}${value}`;
+  return value;
+}
+
 // Access token lives in memory only. Refresh token is delivered via an httpOnly cookie and travels with credentials: "include".
 let accessToken = null;
 let refreshPromise = null;
@@ -36,8 +45,10 @@ async function refreshAccessToken() {
 }
 
 async function doFetch(path, options, { retry = true } = {}) {
+  // For FormData bodies let the browser set Content-Type (needs the boundary).
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
+    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
     ...(options.headers || {})
   };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -106,6 +117,14 @@ export const api = {
   addCard(deckId, payload) { return request(`/decks/${deckId}/cards`, { method: "POST", body: JSON.stringify(payload) }); },
   updateCard(deckId, cardId, payload) { return request(`/decks/${deckId}/cards/${cardId}`, { method: "PATCH", body: JSON.stringify(payload) }); },
   deleteCard(deckId, cardId) { return request(`/decks/${deckId}/cards/${cardId}`, { method: "DELETE" }); },
+  async uploadCardImage(file) {
+    const form = new FormData();
+    form.append("image", file);
+    const res = await doFetch("/cards/image", { method: "POST", body: form });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message || "Upload failed");
+    return data.url;
+  },
   createSession(payload) { return request("/study/sessions", { method: "POST", body: JSON.stringify(payload) }); },
   answerSession(sessionId, payload) { return request(`/study/sessions/${sessionId}/answer`, { method: "POST", body: JSON.stringify(payload) }); },
   toggleShuffle(sessionId, enabled) { return request(`/study/sessions/${sessionId}/shuffle`, { method: "PATCH", body: JSON.stringify({ enabled }) }); },

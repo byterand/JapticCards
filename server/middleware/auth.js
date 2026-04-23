@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import RevokedToken from '../models/RevokedToken.js';
 import { config } from '../config/env.js';
+import { isJtiKnownGood, markJtiGood } from '../utils/revocationCache.js';
 
 const verifyOptions = () => ({
   algorithms: [config.jwt.algorithm],
@@ -23,9 +24,12 @@ export async function verifyToken(req, res, next) {
       return res.status(401).json({ message: 'Invalid token type' });
     }
     if (decoded.jti) {
-      const revoked = await RevokedToken.findOne({ jti: decoded.jti });
-      if (revoked) {
-        return res.status(401).json({ message: 'Session is no longer valid' });
+      if (!isJtiKnownGood(decoded.jti)) {
+        const revoked = await RevokedToken.findOne({ jti: decoded.jti });
+        if (revoked) {
+          return res.status(401).json({ message: 'Session is no longer valid' });
+        }
+        markJtiGood(decoded.jti);
       }
     }
     req.user = decoded;
