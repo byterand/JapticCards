@@ -13,15 +13,16 @@
   "license": "ISC",
   "author": "Chris Field, Payton Bates, Jacob Radzieta, Aarya Radhan, Irakli Dokhnadze, Tate Barnard",
   "type": "module",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "seed": "node seed.js",
+    "start": "node server.js",
     "test": "node --test"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "csv-parse": "^6.2.1",
+    "csv-stringify": "^6.7.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",

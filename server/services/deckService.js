@@ -5,7 +5,7 @@ import CardProgress from '../models/CardProgress.js';
 import DeckStat from '../models/DeckStat.js';
 import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck } from './accessService.js';
-import { parseCsv } from '../utils/csv.js';
+import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
 
 export async function listUserDecks(userId) {
@@ -104,17 +104,17 @@ export async function exportDeck(user, deckId, format) {
     return { contentType: 'application/json', body: JSON.stringify(payload, null, 2) };
   }
   if (format === 'csv') {
-    const header = 'deckTitle,deckDescription,deckCategory,front,back,frontImage,backImage';
-    const rows = payload.cards.map((card) => [
-      payload.title,
-      payload.description,
-      payload.category,
-      card.front,
-      card.back,
-      card.frontImage,
-      card.backImage
-    ].map((value) => `"${String(value || '').replaceAll('"', '""')}"`).join(','));
-    return { contentType: 'text/csv', body: [header, ...rows].join('\n') };
+    const columns = ['deckTitle', 'deckDescription', 'deckCategory', 'front', 'back', 'frontImage', 'backImage'];
+    const rows = payload.cards.map((card) => ({
+      deckTitle: payload.title,
+      deckDescription: payload.description,
+      deckCategory: payload.category,
+      front: card.front,
+      back: card.back,
+      frontImage: card.frontImage,
+      backImage: card.backImage,
+    }));
+    return { contentType: 'text/csv', body: serializeCsv(columns, rows) };
   }
   throw new HttpError(400, 'Unsupported export format. Use json or csv.');
 }

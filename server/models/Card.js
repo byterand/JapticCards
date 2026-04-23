@@ -34,4 +34,6 @@ const cardSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+cardSchema.index({ deck: 1, order: 1 });
+
 export default mongoose.model('Card', cardSchema);
