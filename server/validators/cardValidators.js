@@ -1,10 +1,12 @@
 import { body } from 'express-validator';
 
 export const cardRules = [
-  body('front').trim().notEmpty(),
-  body('back').trim().notEmpty(),
-  body('frontImage').optional().isString(),
-  body('backImage').optional().isString()
+  body('front').trim().notEmpty().isLength({ max: 500 })
+    .withMessage('Front must be 1-500 characters'),
+  body('back').trim().notEmpty().isLength({ max: 2000 })
+    .withMessage('Back must be 1-2000 characters'),
+  body('frontImage').optional().isString().isLength({ max: 2048 }),
+  body('backImage').optional().isString().isLength({ max: 2048 })
 ];
 
 export const cardUpdateRules = cardRules.map((rule) => rule.optional());

@@ -99,12 +99,7 @@ export async function rotateRefreshToken(oldRefreshToken) {
 
   let stored = await RefreshToken.findOne({ jti: payload.jti });
   if (!stored || stored.tokenHash !== hashToken(oldRefreshToken)) {
-    if (payload.family) {
-      await RefreshToken.updateMany(
-        { family: payload.family, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
-      );
-    }
+    // Unknown jti OR hash mismatch
     throw new HttpError(401, 'Invalid refresh token');
   }
 
@@ -147,8 +142,6 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
       { $setOnInsert: { jti: accessJti, expiresAt } },
       { upsert: true }
     );
-    // Drop any cached "known good" entry so verifyToken can't serve a stale
-    // hit for this jti on subsequent requests.
     invalidateJti(accessJti);
   }
   if (refreshToken) {

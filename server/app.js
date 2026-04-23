@@ -2,9 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import path from 'path';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { uploadsRoot } from './utils/cardImages.js';
 
 const app = express();
 
@@ -17,7 +17,7 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
-app.use('/uploads', express.static(path.resolve('uploads'), {
+app.use('/uploads', express.static(uploadsRoot(), {
   maxAge: '1d',
   setHeaders: (res) => res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
 }));

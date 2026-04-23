@@ -18,8 +18,16 @@ function buildMultipleChoiceQuestion(card, cards) {
   return { prompt: card.front, options };
 }
 
+// Returns { statement, statementTrue } for INTERNAL use only.
+// statementTrue is stripped before leaving this module.
 function buildTrueFalseQuestion(card, cards) {
-  const wrongCard = cards.find((c) => String(c._id) !== String(card._id));
+  // Only pick a wrong candidate whose back differs from this card's back,
+  // otherwise "false" would actually be true.
+  const wrongCandidates = cards.filter((c) =>
+    String(c._id) !== String(card._id) && c.back && c.back !== card.back);
+  const wrongCard = wrongCandidates.length
+    ? wrongCandidates[Math.floor(Math.random() * wrongCandidates.length)]
+    : null;
   const useCorrect = Math.random() > 0.5 || !wrongCard;
   if (useCorrect) {
     return {
@@ -77,7 +85,8 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
       return { cardId: card._id, ...buildMultipleChoiceQuestion(card, cards) };
     }
     if (resolvedMode === 'true_false') {
-      return { cardId: card._id, ...buildTrueFalseQuestion(card, cards) };
+      const { statement } = buildTrueFalseQuestion(card, cards);
+      return { cardId: card._id, statement };
     }
     if (resolvedMode === 'written_answer') {
       return { cardId: card._id, prompt: card.front };
@@ -119,6 +128,15 @@ export async function submitAnswer(user, sessionId, payload) {
   const session = await StudySession.findOne({ _id: sessionId, user: user.userId });
   if (!session) {
     throw new HttpError(404, 'Session not found');
+  }
+
+  // Enforce that the card being answered is actually part of THIS session.
+  // Without this, a user could submit answers for cards outside their review set
+  const inSession = session.originalCardOrder.some(
+    (id) => String(id) === String(payload.cardId)
+  );
+  if (!inSession) {
+    throw new HttpError(400, 'Card is not part of this session');
   }
 
   const card = await Card.findById(payload.cardId);

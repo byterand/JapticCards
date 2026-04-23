@@ -14,19 +14,23 @@ const cardSchema = new mongoose.Schema({
   },
   front: {
     type: String,
-    required: true
+    required: true,
+    maxLength: 500
   },
   back: {
     type: String,
-    required: true
+    required: true,
+    maxLength: 2000
   },
   frontImage: {
     type: String,
-    default: ''
+    default: '',
+    maxLength: 2048
   },
   backImage: {
     type: String,
-    default: ''
+    default: '',
+    maxLength: 2048
   },
   order: {
     type: Number,

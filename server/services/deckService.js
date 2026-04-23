@@ -6,6 +6,7 @@ import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
 import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
+import { deleteManagedImagesForCard } from '../utils/cardImages.js';
 
 export async function listUserDecks(userId) {
   const assignments = await Assignment.find({ student: userId }).select('deck');
@@ -37,8 +38,15 @@ export async function getDeckWithCards(user, deckId) {
     throw new HttpError(404, 'Deck not found');
   }
   const cards = await Card.find({ deck: deckId }).sort({ order: 1 });
+  const { _id, title, description, category, tags, createdAt, updatedAt } = access.deck;
   return {
-    ...access.deck,
+    _id,
+    title,
+    description,
+    category,
+    tags,
+    createdAt,
+    updatedAt,
     cards,
     readOnly: access.readOnly,
     access: access.readOnly ? 'assigned' : 'owner'
@@ -71,13 +79,15 @@ export async function deleteDeck(user, deckId) {
   if (access.readOnly) {
     throw new HttpError(403, 'Assigned decks are read-only for students');
   }
-  const cards = await Card.find({ deck: access.deck._id }).select('_id');
+  // Fetch the image paths before deleting so we can sweep the files afterward.
+  const cards = await Card.find({ deck: access.deck._id }).select('_id frontImage backImage');
   const cardIds = cards.map((card) => card._id);
   await Card.deleteMany({ deck: access.deck._id });
   await CardProgress.deleteMany({ card: { $in: cardIds } });
   await Assignment.deleteMany({ deck: access.deck._id });
   await StudySession.deleteMany({ deck: access.deck._id });
   await Deck.deleteOne({ _id: access.deck._id });
+  Promise.all(cards.map(deleteManagedImagesForCard)).catch(() => {});
 }
 
 export async function exportDeck(user, deckId, format) {
