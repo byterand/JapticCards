@@ -20,16 +20,16 @@ function buildMultipleChoiceQuestion(card, cards) {
 }
 
 function buildTrueFalseQuestion(card, cards) {
-  const useCorrect = Math.random() > 0.5 || cards.length < 2;
+  const wrongCard = cards.find((c) => String(c._id) !== String(card._id));
+  const useCorrect = Math.random() > 0.5 || !wrongCard;
   if (useCorrect) {
     return {
       statement: `${card.front} -> ${card.back}`,
       statementTrue: true
     };
   }
-  const wrongCard = cards.find((c) => String(c._id) !== String(card._id));
   return {
-    statement: `${card.front} -> ${wrongCard?.back || card.back}`,
+    statement: `${card.front} -> ${wrongCard.back}`,
     statementTrue: false
   };
 }
@@ -111,7 +111,7 @@ export async function toggleShuffle(user, sessionId, enabled) {
   session.shuffleEnabled = enabled;
   session.currentCardOrder = enabled
     ? shuffleArray(session.originalCardOrder)
-    : session.originalCardOrder;
+    : [...session.originalCardOrder];
   await session.save();
   return { shuffleEnabled: session.shuffleEnabled, cardOrder: session.currentCardOrder };
 }

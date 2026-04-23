@@ -1,4 +1,5 @@
 import Card from '../models/Card.js';
+import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeck } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
 
@@ -55,5 +56,6 @@ export async function deleteCard(user, cardId) {
   if (access.readOnly) {
     throw new HttpError(403, 'Assigned decks are read-only for students');
   }
+  await CardProgress.deleteMany({ card: card._id });
   await Card.deleteOne({ _id: card._id });
 }

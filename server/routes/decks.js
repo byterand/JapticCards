@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { deckRules, deckUpdateRules } from '../validators/deckValidators.js';
+import { deckRules, deckUpdateRules, importRules } from '../validators/deckValidators.js';
 import { cardRules } from '../validators/cardValidators.js';
 import * as deckService from '../services/deckService.js';
 import * as cardService from '../services/cardService.js';
@@ -19,7 +19,7 @@ router.post('/', verifyToken, deckRules, validate, async (req, res) => {
 });
 
 // Specific routes declared before '/:id' to avoid being shadowed.
-router.post('/import', verifyToken, async (req, res) => {
+router.post('/import', verifyToken, importRules, validate, async (req, res) => {
   const { deckId } = await deckService.importDeck(req.user.userId, req.body);
   return res.status(201).json({ message: 'Deck imported', deckId });
 });
