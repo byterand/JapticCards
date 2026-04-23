@@ -9,16 +9,17 @@ import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
 
 export async function listUserDecks(userId) {
-  const ownedDecks = await Deck.find({ owner: userId }).lean();
   const assignments = await Assignment.find({ student: userId }).select('deck');
   const assignedDeckIds = assignments.map((a) => a.deck);
-  const assignedDecks = assignedDeckIds.length
-    ? await Deck.find({ _id: { $in: assignedDeckIds } }).lean()
-    : [];
 
-  const owned = ownedDecks.map((deck) => ({ ...deck, readOnly: false, access: 'owner' }));
-  const assigned = assignedDecks.map((deck) => ({ ...deck, readOnly: true, access: 'assigned' }));
-  return [...owned, ...assigned];
+  const decks = await Deck.find({
+    $or: [{ owner: userId }, { _id: { $in: assignedDeckIds } }]
+  }).lean();
+
+  return decks.map((deck) => {
+    const isOwner = String(deck.owner) === String(userId);
+    return { ...deck, readOnly: !isOwner, access: isOwner ? 'owner' : 'assigned' };
+  });
 }
 
 export async function createDeck(userId, payload) {
