@@ -3,38 +3,45 @@ import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
 
-export async function createCard(user, deckId, payload) {
-  const access = await getAccessibleDeckLean(user, deckId);
-  if (!access) {
+async function getDeck(user, deckId) {
+  const accDeckLean = await getAccessibleDeckLean(user, deckId);
+
+  if (!accDeckLean)
     throw new HttpError(404, 'Deck not found');
-  }
-  if (access.readOnly) {
+  if (accDeckLean.readOnly)
     throw new HttpError(403, 'Assigned decks are read-only for students');
-  }
-  const count = await Card.countDocuments({ deck: deckId });
-  return Card.create({
-    owner: user.userId,
-    deck: deckId,
-    front: payload.front,
-    back: payload.back,
-    frontImage: payload.frontImage || '',
-    backImage: payload.backImage || '',
-    order: count
-  });
+
+  return accDeckLean;
 }
 
-export async function updateCard(user, deckId, cardId, updates) {
+async function getCard(cardId, deckId) {
   const card = await Card.findById(cardId);
   if (!card || String(card.deck) !== String(deckId)) {
     throw new HttpError(404, 'Card not found');
   }
-  const access = await getAccessibleDeckLean(user, card.deck);
-  if (!access) {
-    throw new HttpError(404, 'Deck not found');
-  }
-  if (access.readOnly) {
-    throw new HttpError(403, 'Assigned decks are read-only for students');
-  }
+
+  return card;
+}
+
+export async function createCard(user, deckId, payload) {
+  await getDeck(user, deckId);
+
+  const count = await Card.countDocuments({ deck: deckId });
+  return Card.create({
+    owner: user.userId,
+    deck: deckId,
+    order: count,
+    front: payload.front,
+    back: payload.back,
+    frontImage: payload.frontImage,
+    backImage: payload.backImage
+  });
+}
+
+export async function updateCard(user, deckId, cardId, updates) {
+  const card = getCard(cardId, deckId);
+  await getDeck(user, deckId);
+
   ['front', 'back', 'frontImage', 'backImage'].forEach((field) => {
     if (updates[field] !== undefined) {
       card[field] = updates[field];
@@ -45,17 +52,8 @@ export async function updateCard(user, deckId, cardId, updates) {
 }
 
 export async function deleteCard(user, deckId, cardId) {
-  const card = await Card.findById(cardId);
-  if (!card || String(card.deck) !== String(deckId)) {
-    throw new HttpError(404, 'Card not found');
-  }
-  const access = await getAccessibleDeckLean(user, card.deck);
-  if (!access) {
-    throw new HttpError(404, 'Deck not found');
-  }
-  if (access.readOnly) {
-    throw new HttpError(403, 'Assigned decks are read-only for students');
-  }
+  const card = getCard(cardId, deckId);
+  await getDeck(user, deckId);
   await CardProgress.deleteMany({ card: card._id });
   await Card.deleteOne({ _id: card._id });
 }

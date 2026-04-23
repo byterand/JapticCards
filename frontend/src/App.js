@@ -21,15 +21,11 @@ function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    api.me()
-      .then((res) => setUser(res.user))
-      .catch(() => localStorage.removeItem("token"))
+    // Attempt silent re-auth via the httpOnly refresh cookie
+    api.restoreSession()
+      .then((restoredUser) => {
+        if (restoredUser) setUser(restoredUser);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,7 +34,6 @@ function AuthProvider({ children }) {
     loading,
     async login(username, password) {
       const res = await api.login({ username, password });
-      localStorage.setItem("token", res.token);
       setUser(res.user);
     },
     async register(payload) {
@@ -50,7 +45,6 @@ function AuthProvider({ children }) {
       } catch (err) {
         // Ignore API logout error and clear local state anyway.
       }
-      localStorage.removeItem("token");
       setUser(null);
     }
   }), [user, loading]);
