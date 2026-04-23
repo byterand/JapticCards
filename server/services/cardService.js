@@ -39,7 +39,7 @@ export async function createCard(user, deckId, payload) {
 }
 
 export async function updateCard(user, deckId, cardId, updates) {
-  const card = getCard(cardId, deckId);
+  const card = await getCard(cardId, deckId);
   await getDeck(user, deckId);
 
   ['front', 'back', 'frontImage', 'backImage'].forEach((field) => {
