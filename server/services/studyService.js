@@ -40,23 +40,23 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
     throw new HttpError(404, 'Deck not found');
   }
 
-  let cards = await Card.find({ deck: deckId }).sort({ order: 1 }).lean();
-  if (!cards.length) {
-    throw new HttpError(400, 'Deck has no cards');
-  }
-
+  const cardFilter = { deck: deckId };
   if (needsReviewOnly) {
-    const cardIds = cards.map((card) => card._id);
     const progress = await CardProgress.find({
       user: user.userId,
-      card: { $in: cardIds },
       status: 'needs_review'
-    }).select('card');
-    const reviewSet = new Set(progress.map((p) => String(p.card)));
-    cards = cards.filter((card) => reviewSet.has(String(card._id)));
-    if (!cards.length) {
+    }).select('card').lean();
+    if (!progress.length) {
       throw new HttpError(400, 'No cards marked as Needs Review');
     }
+    cardFilter._id = { $in: progress.map((p) => p.card) };
+  }
+
+  const cards = await Card.find(cardFilter).sort({ order: 1 }).lean();
+  if (!cards.length) {
+    throw new HttpError(400, needsReviewOnly
+      ? 'No cards marked as Needs Review'
+      : 'Deck has no cards');
   }
 
   const originalCardOrder = cards.map((card) => card._id);
