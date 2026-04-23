@@ -2,7 +2,6 @@ import Deck from '../models/Deck.js';
 import Card from '../models/Card.js';
 import Assignment from '../models/Assignment.js';
 import CardProgress from '../models/CardProgress.js';
-import DeckStat from '../models/DeckStat.js';
 import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
 import { parseCsv, serializeCsv } from '../utils/csv.js';
@@ -77,7 +76,6 @@ export async function deleteDeck(user, deckId) {
   await Card.deleteMany({ deck: access.deck._id });
   await CardProgress.deleteMany({ card: { $in: cardIds } });
   await Assignment.deleteMany({ deck: access.deck._id });
-  await DeckStat.deleteMany({ deck: access.deck._id });
   await StudySession.deleteMany({ deck: access.deck._id });
   await Deck.deleteOne({ _id: access.deck._id });
 }

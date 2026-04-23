@@ -1,7 +1,6 @@
 import Card from '../models/Card.js';
 import StudySession from '../models/StudySession.js';
 import CardProgress from '../models/CardProgress.js';
-import DeckStat from '../models/DeckStat.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { HttpError } from '../utils/HttpError.js';
@@ -147,18 +146,6 @@ export async function submitAnswer(user, sessionId, payload) {
     {
       $setOnInsert: { status: 'still_learning' },
       $inc: {
-        correctCount: isCorrect ? 1 : 0,
-        incorrectCount: isCorrect ? 0 : 1
-      }
-    },
-    { upsert: true, returnDocument: 'after' }
-  );
-
-  await DeckStat.findOneAndUpdate(
-    { user: user.userId, deck: session.deck },
-    {
-      $inc: {
-        cardsStudied: 1,
         correctCount: isCorrect ? 1 : 0,
         incorrectCount: isCorrect ? 0 : 1
       }
