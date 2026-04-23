@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
@@ -15,32 +15,63 @@ export default function StudyPage() {
   const [typedAnswer, setTypedAnswer] = useState("");
   const [result, setResult] = useState("");
   const [stats, setStats] = useState(null);
+  const [error, setError] = useState("");
+  const [starting, setStarting] = useState(false);
 
   const current = session?.questions?.[index];
 
-  const start = async () => {
-    const res = await api.createSession({ deckId: id, mode, sideFirst, needsReviewOnly });
-    setSession(res);
-    setIndex(0);
+  // Reset per-card  state when navigating between cards or starting a new session
+  useEffect(() => {
     setFlipped(false);
+    setTypedAnswer("");
     setResult("");
-    const statRes = await api.getStats(id);
-    setStats(statRes);
+  }, [index, session?.sessionId]);
+
+  const start = async () => {
+    if (starting) return;
+    setError("");
+    setStarting(true);
+    try {
+      const res = await api.createSession({ deckId: id, mode, sideFirst, needsReviewOnly });
+      setSession(res);
+      setIndex(0);
+      setStats(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setStarting(false);
+    }
   };
 
   const submitAnswer = async (payload) => {
     if (!session || !current) return;
-    const res = await api.answerSession(session.sessionId, {
-      cardId: current.cardId,
-      ...payload
-    });
-    setResult(res.isCorrect ? "Correct" : `Incorrect (expected: ${res.expected})`);
-    const statRes = await api.getStats(id);
-    setStats(statRes);
+    setError("");
+    try {
+      const res = await api.answerSession(session.sessionId, {
+        cardId: current.cardId,
+        ...payload
+      });
+      setResult(res.isCorrect ? "Correct" : `Incorrect (expected: ${res.expected})`);
+      const statRes = await api.getStats(id);
+      setStats(statRes);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const updateCardStatus = async (status) => {
+    if (!current) return;
+    setError("");
+    try {
+      await api.setCardStatus(id, current.cardId, status);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
     <Layout>
+      {error && <p className="error">{error}</p>}
       <section className="card">
         <h2>Study Session</h2>
         <label>
@@ -67,7 +98,9 @@ export default function StudyPage() {
           />
           Needs Review Only
         </label>
-        <button type="button" onClick={start}>Start Session</button>
+        <button type="button" onClick={start} disabled={starting}>
+          {starting ? "Starting..." : "Start Session"}
+        </button>
       </section>
 
       {session && current && (
@@ -150,20 +183,25 @@ export default function StudyPage() {
             <button
               type="button"
               onClick={async () => {
-                const enabled = !session.shuffleEnabled;
-                const shuffleRes = await api.toggleShuffle(session.sessionId, enabled);
-                const orderMap = new Map(
-                  session.questions.map((q) => [String(q.cardId), q])
-                );
-                const reorderedQuestions = shuffleRes.cardOrder
-                  .map((cardId) => orderMap.get(String(cardId)))
-                  .filter(Boolean);
-                setSession({
-                  ...session,
-                  shuffleEnabled: shuffleRes.shuffleEnabled,
-                  questions: reorderedQuestions
-                });
-                setIndex(0);
+                setError("");
+                try {
+                  const enabled = !session.shuffleEnabled;
+                  const shuffleRes = await api.toggleShuffle(session.sessionId, enabled);
+                  const orderMap = new Map(
+                    session.questions.map((q) => [String(q.cardId), q])
+                  );
+                  const reorderedQuestions = shuffleRes.cardOrder
+                    .map((cardId) => orderMap.get(String(cardId)))
+                    .filter(Boolean);
+                  setSession({
+                    ...session,
+                    shuffleEnabled: shuffleRes.shuffleEnabled,
+                    questions: reorderedQuestions
+                  });
+                  setIndex(0);
+                } catch (err) {
+                  setError(err.message);
+                }
               }}
             >
               {session.shuffleEnabled ? "Unshuffle" : "Shuffle"}
@@ -172,23 +210,19 @@ export default function StudyPage() {
           <div className="actions">
             <button
               type="button"
-              onClick={() => api.setCardStatus(id, current.cardId, CARD_STATUS.KNOWN)}
+              onClick={() => updateCardStatus(CARD_STATUS.KNOWN)}
             >
               Known
             </button>
             <button
               type="button"
-              onClick={() =>
-                api.setCardStatus(id, current.cardId, CARD_STATUS.STILL_LEARNING)
-              }
+              onClick={() => updateCardStatus(CARD_STATUS.STILL_LEARNING)}
             >
               Still Learning
             </button>
             <button
               type="button"
-              onClick={() =>
-                api.setCardStatus(id, current.cardId, CARD_STATUS.NEEDS_REVIEW)
-              }
+              onClick={() => updateCardStatus(CARD_STATUS.NEEDS_REVIEW)}
             >
               Needs Review
             </button>

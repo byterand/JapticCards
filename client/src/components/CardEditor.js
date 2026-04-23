@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, imageUrl } from "../services/api";
 
 export default function CardEditor({ card, deckId, readOnly, onSaved }) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
+
+  // Sync inputs when the card prop changes
+  useEffect(() => {
+    setFront(card.front);
+    setBack(card.back);
+  }, [card._id, card.front, card.back]);
 
   return (
     <article className="cardRow">
