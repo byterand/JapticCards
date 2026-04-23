@@ -139,6 +139,21 @@ export const api = {
   revokeAssignment(id) { return request(`/teacher/assignments/${id}`, { method: "DELETE" }); },
   async exportDeck(id, format) {
     const res = await doFetch(`/decks/${id}/export?format=${format}`, { method: "GET" });
+    if (!res.ok) {
+      // Without this check, a JSON error body (e.g. 401/404) would be written
+      // into the downloaded .csv/.json file.
+      let message = "Export failed";
+      const isJson = res.headers.get("content-type")?.includes("application/json");
+      if (isJson) {
+        try {
+          const data = await res.json();
+          message = data?.message || data?.error || message;
+        } catch {
+          // keep default message
+        }
+      }
+      throw new Error(message);
+    }
     return res.text();
   },
   importDeck(payload) { return request("/decks/import", { method: "POST", body: JSON.stringify(payload) }); }
