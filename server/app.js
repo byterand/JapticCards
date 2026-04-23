@@ -2,9 +2,15 @@ import express from 'express';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 import cors from 'cors';
+import helmet from 'helmet';
 import routes from './routes/index.js';
 
 const app = express();
+
+// Security-related response headers. Defaults are a sensible baseline for a
+// JSON API; tighten CSP/etc. here if the server ever serves HTML directly.
+app.use(helmet());
+
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000' }));
 app.use(express.json());
 routes(app);
