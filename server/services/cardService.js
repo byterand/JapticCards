@@ -1,10 +1,10 @@
 import Card from '../models/Card.js';
 import CardProgress from '../models/CardProgress.js';
-import { getAccessibleDeck } from './accessService.js';
+import { getAccessibleDeckLean } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
 
 export async function createCard(user, deckId, payload) {
-  const access = await getAccessibleDeck(user, deckId);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
@@ -28,7 +28,7 @@ export async function updateCard(user, cardId, updates) {
   if (!card) {
     throw new HttpError(404, 'Card not found');
   }
-  const access = await getAccessibleDeck(user, card.deck);
+  const access = await getAccessibleDeckLean(user, card.deck);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
@@ -49,7 +49,7 @@ export async function deleteCard(user, cardId) {
   if (!card) {
     throw new HttpError(404, 'Card not found');
   }
-  const access = await getAccessibleDeck(user, card.deck);
+  const access = await getAccessibleDeckLean(user, card.deck);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }

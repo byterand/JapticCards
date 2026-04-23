@@ -1,11 +1,11 @@
 import Card from '../models/Card.js';
 import CardProgress from '../models/CardProgress.js';
 import DeckStat from '../models/DeckStat.js';
-import { getAccessibleDeck } from './accessService.js';
+import { getAccessibleDeckLean } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
 
 export async function getDeckStats(user, deckId) {
-  const access = await getAccessibleDeck(user, deckId);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }

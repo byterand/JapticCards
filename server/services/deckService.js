@@ -4,7 +4,7 @@ import Assignment from '../models/Assignment.js';
 import CardProgress from '../models/CardProgress.js';
 import DeckStat from '../models/DeckStat.js';
 import StudySession from '../models/StudySession.js';
-import { getAccessibleDeck } from './accessService.js';
+import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
 import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
 
@@ -33,13 +33,13 @@ export async function createDeck(userId, payload) {
 }
 
 export async function getDeckWithCards(user, deckId) {
-  const access = await getAccessibleDeck(user, deckId);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
   const cards = await Card.find({ deck: deckId }).sort({ order: 1 });
   return {
-    ...access.deck.toObject(),
+    ...access.deck,
     cards,
     readOnly: access.readOnly,
     access: access.readOnly ? 'assigned' : 'owner'
@@ -65,7 +65,7 @@ export async function updateDeck(user, deckId, updates) {
 }
 
 export async function deleteDeck(user, deckId) {
-  const access = await getAccessibleDeck(user, deckId);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
@@ -83,7 +83,7 @@ export async function deleteDeck(user, deckId) {
 }
 
 export async function exportDeck(user, deckId, format) {
-  const access = await getAccessibleDeck(user, deckId);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
