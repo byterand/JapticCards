@@ -1,4 +1,4 @@
-// Centralized string constants shared across the frontend.
+// Centralized string constants shared across the client.
 // Keep these in sync with the backend validators (server/validators/*).
 
 export const STUDY_MODES = {
