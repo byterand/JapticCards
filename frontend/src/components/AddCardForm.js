@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addCard } from "../services/api";
+import { api } from "../services/api";
 
 export default function AddCardForm({ deckId, refresh }) {
   const [front, setFront] = useState("");
@@ -7,7 +7,7 @@ export default function AddCardForm({ deckId, refresh }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await addCard(deckId, front, back);
+    await api.addCard(deckId, { front, back });
     setFront("");
     setBack("");
     refresh();

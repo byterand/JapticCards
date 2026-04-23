@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { createDeck } from "../services/api";
+import { api } from "../services/api";
 
 export default function CreateDeckForm({ refresh }) {
   const [name, setName] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createDeck(name);
+    await api.createDeck({ title: name });
     setName("");
     refresh();
   };

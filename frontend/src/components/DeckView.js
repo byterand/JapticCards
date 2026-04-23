@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDeck } from "../services/api";
+import { api } from "../services/api";
 import Flashcard from "./Flashcard";
 
 export default function DeckView({ deckId }) {
@@ -7,7 +7,7 @@ export default function DeckView({ deckId }) {
 
   useEffect(() => {
     if (deckId) {
-      getDeck(deckId).then(setDeck);
+      api.getDeck(deckId).then(setDeck);
     }
   }, [deckId]);
 
@@ -15,7 +15,7 @@ export default function DeckView({ deckId }) {
 
   return (
     <div>
-      <h2>{deck.deckName}</h2>
+      <h2>{deck.title}</h2>
       {deck.cards.map(card => (
         <Flashcard key={card._id} card={card} />
       ))}
