@@ -51,6 +51,7 @@ export default function DeckPage() {
 
   return (
     <Layout>
+      {error && <p className="error">{error}</p>}
       <section className="card">
         <h2>{deck.title}</h2>
         <p>{deck.description}</p>
@@ -59,8 +60,13 @@ export default function DeckPage() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              await api.updateDeck(deck._id, { title, description, category });
-              await loadDeck();
+              setError("");
+              try {
+                await api.updateDeck(deck._id, { title, description, category });
+                await loadDeck();
+              } catch (err) {
+                setError(err.message);
+              }
             }}
           >
             <h3>Edit Deck</h3>
@@ -87,13 +93,18 @@ export default function DeckPage() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              await api.addCard(deck._id, { front, back, frontImage, backImage });
-              setFront("");
-              setBack("");
-              setFrontImage("");
-              setBackImage("");
-              e.target.reset();
-              await loadDeck();
+              setError("");
+              try {
+                await api.addCard(deck._id, { front, back, frontImage, backImage });
+                setFront("");
+                setBack("");
+                setFrontImage("");
+                setBackImage("");
+                e.target.reset();
+                await loadDeck();
+              } catch (err) {
+                setError(err.message);
+              }
             }}
           >
             <label>
@@ -142,6 +153,7 @@ export default function DeckPage() {
             deckId={deck._id}
             readOnly={deck.readOnly}
             onSaved={loadDeck}
+            onError={setError}
           />
         ))}
       </section>

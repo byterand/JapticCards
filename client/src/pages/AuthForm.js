@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
-import { USER_ROLES } from "../constants";
+import { ROUTES, USER_ROLES } from "../constants";
 
 export default function AuthForm({ registerMode = false }) {
   const { login, register } = useAuth();
@@ -22,7 +22,7 @@ export default function AuthForm({ registerMode = false }) {
       } else {
         await login(username, password);
       }
-      navigate("/");
+      navigate(ROUTES.DASHBOARD);
     } catch (err) {
       setError(err.message);
     }
@@ -58,7 +58,7 @@ export default function AuthForm({ registerMode = false }) {
         <button type="submit">{registerMode ? "Create Account" : "Login"}</button>
         <p>
           {registerMode ? "Already have an account?" : "Need an account?"}{" "}
-          <Link to={registerMode ? "/login" : "/register"}>
+          <Link to={registerMode ? ROUTES.LOGIN : ROUTES.REGISTER}>
             {registerMode ? "Login" : "Register"}
           </Link>
         </p>

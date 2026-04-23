@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
-import { USER_ROLES } from "../constants";
+import { ROUTES, USER_ROLES } from "../constants";
 import AuthForm from "../pages/AuthForm";
 import DashboardPage from "../pages/DashboardPage";
 import DeckPage from "../pages/DeckPage";
@@ -10,20 +10,20 @@ import TeacherPage from "../pages/TeacherPage";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<AuthForm />} />
-      <Route path="/register" element={<AuthForm registerMode />} />
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/decks/:id" element={<ProtectedRoute><DeckPage /></ProtectedRoute>} />
-      <Route path="/study/:id" element={<ProtectedRoute><StudyPage /></ProtectedRoute>} />
+      <Route path={ROUTES.LOGIN} element={<AuthForm />} />
+      <Route path={ROUTES.REGISTER} element={<AuthForm registerMode />} />
+      <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path={ROUTES.DECK} element={<ProtectedRoute><DeckPage /></ProtectedRoute>} />
+      <Route path={ROUTES.STUDY} element={<ProtectedRoute><StudyPage /></ProtectedRoute>} />
       <Route
-        path="/teacher"
+        path={ROUTES.TEACHER}
         element={
           <ProtectedRoute role={USER_ROLES.TEACHER}>
             <TeacherPage />
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
     </Routes>
   );
 }

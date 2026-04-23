@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { EXPORT_FORMATS } from "../constants";
 
 export default function ImportDeckForm({ onImported }) {
-  const [format, setFormat] = useState("json");
+  const [format, setFormat] = useState(EXPORT_FORMATS.JSON);
   const [error, setError] = useState("");
 
   return (
@@ -26,8 +27,8 @@ export default function ImportDeckForm({ onImported }) {
       <label>
         Format
         <select value={format} onChange={(e) => setFormat(e.target.value)}>
-          <option value="json">JSON</option>
-          <option value="csv">CSV</option>
+          <option value={EXPORT_FORMATS.JSON}>JSON</option>
+          <option value={EXPORT_FORMATS.CSV}>CSV</option>
         </select>
       </label>
       <input type="file" name="file" required />

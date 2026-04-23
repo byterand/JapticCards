@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
+import { ACCESS_LEVELS } from "../constants";
 
 export default function TeacherPage() {
   const [students, setStudents] = useState([]);
@@ -9,22 +10,41 @@ export default function TeacherPage() {
   const [assignments, setAssignments] = useState([]);
   const [selectedDeck, setSelectedDeck] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [error, setError] = useState("");
   const { confirm, modal } = useConfirm();
 
   async function load() {
-    const [studentList, deckList, assignmentList] = await Promise.all([
-      api.getStudents(),
-      api.getDecks(),
-      api.getAssignments()
-    ]);
-    setStudents(studentList);
-    setDecks(deckList.filter((d) => d.access === "owner"));
-    setAssignments(assignmentList);
+    try {
+      const [studentList, deckList, assignmentList] = await Promise.all([
+        api.getStudents(),
+        api.getDecks(),
+        api.getAssignments()
+      ]);
+      setStudents(studentList);
+      setDecks(deckList.filter((d) => d.access === ACCESS_LEVELS.OWNER));
+      setAssignments(assignmentList);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   useEffect(() => {
     load();
   }, []);
+
+  const handleAssign = async () => {
+    setError("");
+    try {
+      await api.assignDeck({
+        deckId: selectedDeck,
+        studentIds: selectedStudents
+      });
+      setSelectedStudents([]);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const handleRevoke = async (assignment) => {
     const ok = await confirm({
@@ -34,12 +54,18 @@ export default function TeacherPage() {
       danger: true
     });
     if (!ok) return;
-    await api.revokeAssignment(assignment._id);
-    await load();
+    setError("");
+    try {
+      await api.revokeAssignment(assignment._id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
     <Layout>
+      {error && <p className="error">{error}</p>}
       <section className="card">
         <h2>Assign Decks</h2>
         <label>
@@ -66,17 +92,7 @@ export default function TeacherPage() {
             {student.username}
           </label>
         ))}
-        <button
-          type="button"
-          onClick={async () => {
-            await api.assignDeck({
-              deckId: selectedDeck,
-              studentIds: selectedStudents
-            });
-            setSelectedStudents([]);
-            await load();
-          }}
-        >
+        <button type="button" onClick={handleAssign}>
           Assign
         </button>
       </section>

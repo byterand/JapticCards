@@ -23,3 +23,27 @@ export const USER_ROLES = {
   STUDENT: "student",
   TEACHER: "teacher"
 };
+
+export const ACCESS_LEVELS = {
+  OWNER: "owner",
+  ASSIGNED: "assigned"
+};
+
+export const EXPORT_FORMATS = {
+  JSON: "json",
+  CSV: "csv"
+};
+
+export const ROUTES = {
+  LOGIN: "/login",
+  REGISTER: "/register",
+  DASHBOARD: "/",
+  TEACHER: "/teacher",
+  DECK: "/decks/:id",
+  STUDY: "/study/:id"
+};
+
+export const buildPath = {
+  deck: (id) => `/decks/${id}`,
+  study: (id) => `/study/${id}`
+};

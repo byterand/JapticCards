@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import ImportDeckForm from "../components/ImportDeckForm";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
+import { EXPORT_FORMATS, buildPath } from "../constants";
 
 export default function DashboardPage() {
   const [decks, setDecks] = useState([]);
@@ -31,10 +32,10 @@ export default function DashboardPage() {
 
   const handleExport = async (deck) => {
     setError("");
-    const format = (exportFormats[deck._id] || "json").toLowerCase();
+    const format = (exportFormats[deck._id] || EXPORT_FORMATS.JSON).toLowerCase();
     try {
       const content = await api.exportDeck(deck._id, format);
-      const blobType = format === "csv" ? "text/csv" : "application/json";
+      const blobType = format === EXPORT_FORMATS.CSV ? "text/csv" : "application/json";
       const blob = new Blob([content], { type: blobType });
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -88,17 +89,22 @@ export default function DashboardPage() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              await api.createDeck({
-                title,
-                description,
-                category,
-                tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
-              });
-              setTitle("");
-              setDescription("");
-              setCategory("");
-              setTags("");
-              await loadDecks();
+              setError("");
+              try {
+                await api.createDeck({
+                  title,
+                  description,
+                  category,
+                  tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
+                });
+                setTitle("");
+                setDescription("");
+                setCategory("");
+                setTags("");
+                await loadDecks();
+              } catch (err) {
+                setError(err.message);
+              }
             }}
           >
             <label>
@@ -157,16 +163,16 @@ export default function DashboardPage() {
                 {deck.readOnly && <small>Assigned deck (read-only)</small>}
               </div>
               <div className="actions">
-                <Link to={`/decks/${deck._id}`}>Open</Link>
-                <Link to={`/study/${deck._id}`}>Study</Link>
+                <Link to={buildPath.deck(deck._id)}>Open</Link>
+                <Link to={buildPath.study(deck._id)}>Study</Link>
                 <span className="exportGroup">
                   <select
                     aria-label="Export format"
-                    value={exportFormats[deck._id] || "json"}
+                    value={exportFormats[deck._id] || EXPORT_FORMATS.JSON}
                     onChange={(e) => setExportFormat(deck._id, e.target.value)}
                   >
-                    <option value="json">JSON</option>
-                    <option value="csv">CSV</option>
+                    <option value={EXPORT_FORMATS.JSON}>JSON</option>
+                    <option value={EXPORT_FORMATS.CSV}>CSV</option>
                   </select>
                   <button type="button" onClick={() => handleExport(deck)}>
                     Export

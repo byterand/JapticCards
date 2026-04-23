@@ -2,16 +2,29 @@ import { useEffect, useState } from "react";
 import { api, imageUrl } from "../services/api";
 import useConfirm from "../hooks/useConfirm";
 
-export default function CardEditor({ card, deckId, readOnly, onSaved }) {
+export default function CardEditor({ card, deckId, readOnly, onSaved, onError }) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
   const { confirm, modal } = useConfirm();
+
+  const reportError = (err) => {
+    if (onError) onError(err.message);
+  };
 
   // Sync inputs when the card prop changes
   useEffect(() => {
     setFront(card.front);
     setBack(card.back);
   }, [card._id, card.front, card.back]);
+
+  const handleSave = async () => {
+    try {
+      await api.updateCard(deckId, card._id, { front, back });
+      onSaved();
+    } catch (err) {
+      reportError(err);
+    }
+  };
 
   const handleDelete = async () => {
     const ok = await confirm({
@@ -21,8 +34,12 @@ export default function CardEditor({ card, deckId, readOnly, onSaved }) {
       danger: true
     });
     if (!ok) return;
-    await api.deleteCard(deckId, card._id);
-    onSaved();
+    try {
+      await api.deleteCard(deckId, card._id);
+      onSaved();
+    } catch (err) {
+      reportError(err);
+    }
   };
 
   return (
@@ -40,13 +57,7 @@ export default function CardEditor({ card, deckId, readOnly, onSaved }) {
         <div className="actions">
           <input value={front} onChange={(e) => setFront(e.target.value)} />
           <input value={back} onChange={(e) => setBack(e.target.value)} />
-          <button
-            type="button"
-            onClick={async () => {
-              await api.updateCard(deckId, card._id, { front, back });
-              onSaved();
-            }}
-          >
+          <button type="button" onClick={handleSave}>
             Save
           </button>
           <button
