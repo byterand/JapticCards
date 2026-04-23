@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
@@ -13,7 +13,7 @@ export default function TeacherPage() {
   const [error, setError] = useState("");
   const { confirm, modal } = useConfirm();
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [studentList, deckList, assignmentList] = await Promise.all([
         api.getStudents(),
@@ -26,13 +26,13 @@ export default function TeacherPage() {
     } catch (err) {
       setError(err.message);
     }
-  }
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const handleAssign = async () => {
+  const handleAssign = useCallback(async () => {
     setError("");
     try {
       await api.assignDeck({
@@ -44,9 +44,9 @@ export default function TeacherPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [selectedDeck, selectedStudents, load]);
 
-  const handleRevoke = async (assignment) => {
+  const handleRevoke = useCallback(async (assignment) => {
     const ok = await confirm({
       title: "Revoke assignment?",
       message: `${assignment.student?.username || "This student"} will lose access to "${assignment.deck?.title || "this deck"}".`,
@@ -61,7 +61,7 @@ export default function TeacherPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [confirm, load]);
 
   return (
     <Layout>

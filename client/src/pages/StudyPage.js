@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
@@ -27,7 +27,7 @@ export default function StudyPage() {
     setResult("");
   }, [index, session?.sessionId]);
 
-  const start = async () => {
+  const start = useCallback(async () => {
     if (starting) return;
     setError("");
     setStarting(true);
@@ -41,9 +41,9 @@ export default function StudyPage() {
     } finally {
       setStarting(false);
     }
-  };
+  }, [starting, id, mode, sideFirst, needsReviewOnly]);
 
-  const submitAnswer = async (payload) => {
+  const submitAnswer = useCallback(async (payload) => {
     if (!session || !current) return;
     setError("");
     try {
@@ -57,9 +57,9 @@ export default function StudyPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [session, current, id]);
 
-  const updateCardStatus = async (status) => {
+  const updateCardStatus = useCallback(async (status) => {
     if (!current) return;
     setError("");
     try {
@@ -67,7 +67,30 @@ export default function StudyPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [current, id]);
+
+  const toggleShuffleHandler = useCallback(async () => {
+    if (!session) return;
+    setError("");
+    try {
+      const enabled = !session.shuffleEnabled;
+      const shuffleRes = await api.toggleShuffle(session.sessionId, enabled);
+      const orderMap = new Map(
+        session.questions.map((q) => [String(q.cardId), q])
+      );
+      const reorderedQuestions = shuffleRes.cardOrder
+        .map((cardId) => orderMap.get(String(cardId)))
+        .filter(Boolean);
+      setSession({
+        ...session,
+        shuffleEnabled: shuffleRes.shuffleEnabled,
+        questions: reorderedQuestions
+      });
+      setIndex(0);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [session]);
 
   return (
     <Layout>
@@ -180,30 +203,7 @@ export default function StudyPage() {
             >
               Next
             </button>
-            <button
-              type="button"
-              onClick={async () => {
-                setError("");
-                try {
-                  const enabled = !session.shuffleEnabled;
-                  const shuffleRes = await api.toggleShuffle(session.sessionId, enabled);
-                  const orderMap = new Map(
-                    session.questions.map((q) => [String(q.cardId), q])
-                  );
-                  const reorderedQuestions = shuffleRes.cardOrder
-                    .map((cardId) => orderMap.get(String(cardId)))
-                    .filter(Boolean);
-                  setSession({
-                    ...session,
-                    shuffleEnabled: shuffleRes.shuffleEnabled,
-                    questions: reorderedQuestions
-                  });
-                  setIndex(0);
-                } catch (err) {
-                  setError(err.message);
-                }
-              }}
-            >
+            <button type="button" onClick={toggleShuffleHandler}>
               {session.shuffleEnabled ? "Unshuffle" : "Shuffle"}
             </button>
           </div>

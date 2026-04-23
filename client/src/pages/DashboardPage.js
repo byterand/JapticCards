@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import ImportDeckForm from "../components/ImportDeckForm";
@@ -18,19 +18,20 @@ export default function DashboardPage() {
   const [exportFormats, setExportFormats] = useState({});
   const { confirm, modal } = useConfirm();
 
-  const setExportFormat = (deckId, format) =>
+  const setExportFormat = useCallback((deckId, format) => {
     setExportFormats((prev) => ({ ...prev, [deckId]: format }));
+  }, []);
 
-  const loadDecks = async () => {
+  const loadDecks = useCallback(async () => {
     try {
       const list = await api.getDecks();
       setDecks(list);
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, []);
 
-  const handleExport = async (deck) => {
+  const handleExport = useCallback(async (deck) => {
     setError("");
     const format = (exportFormats[deck._id] || EXPORT_FORMATS.JSON).toLowerCase();
     try {
@@ -48,9 +49,9 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [exportFormats]);
 
-  const handleDelete = async (deck) => {
+  const handleDelete = useCallback(async (deck) => {
     const ok = await confirm({
       title: "Delete deck?",
       message: `"${deck.title}" and all of its cards will be permanently removed. This cannot be undone.`,
@@ -64,20 +65,25 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [confirm, loadDecks]);
 
   useEffect(() => {
     loadDecks();
-  }, []);
+  }, [loadDecks]);
 
-  const filtered = decks.filter((deck) => {
-    const matchesSearch = deck.title.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter ? deck.category === categoryFilter : true;
-    return matchesSearch && matchesCategory;
-  });
+  // Recompute only when the inputs that affect the filter change.
+  const filtered = useMemo(
+    () => decks.filter((deck) => {
+      const matchesSearch = deck.title.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = categoryFilter ? deck.category === categoryFilter : true;
+      return matchesSearch && matchesCategory;
+    }),
+    [decks, search, categoryFilter]
+  );
 
-  const categories = Array.from(
-    new Set(decks.map((deck) => deck.category).filter(Boolean))
+  const categories = useMemo(
+    () => Array.from(new Set(decks.map((deck) => deck.category).filter(Boolean))),
+    [decks]
   );
 
   return (

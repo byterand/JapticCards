@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 import { api } from "../services/api";
 
 const AuthContext = createContext(null);
@@ -20,25 +27,30 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const value = useMemo(() => ({
-    user,
-    loading,
-    async login(username, password) {
-      const res = await api.login({ username, password });
-      setUser(res.user);
-    },
-    async register(payload) {
-      await api.register(payload);
-    },
-    async logout() {
-      try {
-        await api.logout();
-      } catch (err) {
-        // Ignore API logout error and clear local state anyway.
-      }
-      setUser(null);
+  // Each method is memoized so its identity stays stable across renders
+  // (consumers won't re-fire effects keyed on these references).
+  const login = useCallback(async (username, password) => {
+    const res = await api.login({ username, password });
+    setUser(res.user);
+  }, []);
+
+  const register = useCallback(async (payload) => {
+    await api.register(payload);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      // Ignore API logout error and clear local state anyway.
     }
-  }), [user, loading]);
+    setUser(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, loading, login, register, logout }),
+    [user, loading, login, register, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
