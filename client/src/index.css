@@ -85,6 +85,20 @@ label {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.actions select,
+.actions input {
+  width: auto;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+}
+
+.exportGroup {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
 }
 
 .filters {
@@ -127,4 +141,49 @@ label {
 .checkbox input {
   width: auto;
   margin: 0;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 25, 45, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  min-width: 280px;
+  max-width: 460px;
+  box-shadow: 0 12px 32px rgba(15, 25, 45, 0.25);
+}
+
+.modal h3 {
+  margin: 0 0 0.5rem;
+}
+
+.modal p {
+  margin: 0 0 1rem;
+  color: #2c3a55;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border-color: #a82a1c;
+}
+
+.btn-danger:hover {
+  background: #a82a1c;
 }

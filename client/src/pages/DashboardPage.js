@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import ImportDeckForm from "../components/ImportDeckForm";
+import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
 
 export default function DashboardPage() {
@@ -13,11 +14,52 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [error, setError] = useState("");
+  const [exportFormats, setExportFormats] = useState({});
+  const { confirm, modal } = useConfirm();
+
+  const setExportFormat = (deckId, format) =>
+    setExportFormats((prev) => ({ ...prev, [deckId]: format }));
 
   const loadDecks = async () => {
     try {
       const list = await api.getDecks();
       setDecks(list);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleExport = async (deck) => {
+    setError("");
+    const format = (exportFormats[deck._id] || "json").toLowerCase();
+    try {
+      const content = await api.exportDeck(deck._id, format);
+      const blobType = format === "csv" ? "text/csv" : "application/json";
+      const blob = new Blob([content], { type: blobType });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${deck.title || "deck"}.${format}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (deck) => {
+    const ok = await confirm({
+      title: "Delete deck?",
+      message: `"${deck.title}" and all of its cards will be permanently removed. This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true
+    });
+    if (!ok) return;
+    try {
+      await api.deleteDeck(deck._id);
+      await loadDecks();
     } catch (err) {
       setError(err.message);
     }
@@ -117,35 +159,24 @@ export default function DashboardPage() {
               <div className="actions">
                 <Link to={`/decks/${deck._id}`}>Open</Link>
                 <Link to={`/study/${deck._id}`}>Study</Link>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const format = window.prompt("Export as json or csv?", "json");
-                    if (!format) return;
-                    const content = await api.exportDeck(deck._id, format);
-                    const blobType = format.toLowerCase() === "csv"
-                      ? "text/csv"
-                      : "application/json";
-                    const blob = new Blob([content], { type: blobType });
-                    const url = window.URL.createObjectURL(blob);
-                    const anchor = document.createElement("a");
-                    anchor.href = url;
-                    anchor.download = `${deck.title || "deck"}.${format.toLowerCase()}`;
-                    document.body.appendChild(anchor);
-                    anchor.click();
-                    document.body.removeChild(anchor);
-                    window.URL.revokeObjectURL(url);
-                  }}
-                >
-                  Export
-                </button>
+                <span className="exportGroup">
+                  <select
+                    aria-label="Export format"
+                    value={exportFormats[deck._id] || "json"}
+                    onChange={(e) => setExportFormat(deck._id, e.target.value)}
+                  >
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                  </select>
+                  <button type="button" onClick={() => handleExport(deck)}>
+                    Export
+                  </button>
+                </span>
                 {!deck.readOnly && (
                   <button
                     type="button"
-                    onClick={async () => {
-                      await api.deleteDeck(deck._id);
-                      await loadDecks();
-                    }}
+                    className="btn-danger"
+                    onClick={() => handleDelete(deck)}
                   >
                     Delete
                   </button>
@@ -160,6 +191,7 @@ export default function DashboardPage() {
         <h2>Import Deck</h2>
         <ImportDeckForm onImported={loadDecks} />
       </section>
+      {modal}
     </Layout>
   );
 }

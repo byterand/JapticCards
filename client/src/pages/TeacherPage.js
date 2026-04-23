@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
 
 export default function TeacherPage() {
@@ -8,6 +9,7 @@ export default function TeacherPage() {
   const [assignments, setAssignments] = useState([]);
   const [selectedDeck, setSelectedDeck] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const { confirm, modal } = useConfirm();
 
   async function load() {
     const [studentList, deckList, assignmentList] = await Promise.all([
@@ -23,6 +25,18 @@ export default function TeacherPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleRevoke = async (assignment) => {
+    const ok = await confirm({
+      title: "Revoke assignment?",
+      message: `${assignment.student?.username || "This student"} will lose access to "${assignment.deck?.title || "this deck"}".`,
+      confirmLabel: "Revoke",
+      danger: true
+    });
+    if (!ok) return;
+    await api.revokeAssignment(assignment._id);
+    await load();
+  };
 
   return (
     <Layout>
@@ -74,16 +88,15 @@ export default function TeacherPage() {
             <span>{assignment.deck?.title} -&gt; {assignment.student?.username}</span>
             <button
               type="button"
-              onClick={async () => {
-                await api.revokeAssignment(assignment._id);
-                await load();
-              }}
+              className="btn-danger"
+              onClick={() => handleRevoke(assignment)}
             >
               Revoke
             </button>
           </article>
         ))}
       </section>
+      {modal}
     </Layout>
   );
 }

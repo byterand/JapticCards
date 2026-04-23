@@ -1,15 +1,29 @@
 import { useEffect, useState } from "react";
 import { api, imageUrl } from "../services/api";
+import useConfirm from "../hooks/useConfirm";
 
 export default function CardEditor({ card, deckId, readOnly, onSaved }) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
+  const { confirm, modal } = useConfirm();
 
   // Sync inputs when the card prop changes
   useEffect(() => {
     setFront(card.front);
     setBack(card.back);
   }, [card._id, card.front, card.back]);
+
+  const handleDelete = async () => {
+    const ok = await confirm({
+      title: "Delete card?",
+      message: `"${card.front}" will be permanently removed from this deck.`,
+      confirmLabel: "Delete",
+      danger: true
+    });
+    if (!ok) return;
+    await api.deleteCard(deckId, card._id);
+    onSaved();
+  };
 
   return (
     <article className="cardRow">
@@ -37,15 +51,14 @@ export default function CardEditor({ card, deckId, readOnly, onSaved }) {
           </button>
           <button
             type="button"
-            onClick={async () => {
-              await api.deleteCard(deckId, card._id);
-              onSaved();
-            }}
+            className="btn-danger"
+            onClick={handleDelete}
           >
             Delete
           </button>
         </div>
       )}
+      {modal}
     </article>
   );
 }
