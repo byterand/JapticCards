@@ -75,7 +75,7 @@ test('deck/card CRUD and study basics', async () => {
   assert.equal(createdCard.status, 201);
   const cardId = createdCard.body._id;
 
-  const editedCard = await request.patch(`/cards/${cardId}`).set(auth).send({ back: 'Powerhouse of the cell' });
+  const editedCard = await request.patch(`/decks/${deckId}/cards/${cardId}`).set(auth).send({ back: 'Powerhouse of the cell' });
   assert.equal(editedCard.status, 200);
 
   const session = await request.post('/study/sessions').set(auth).send({
@@ -92,14 +92,14 @@ test('deck/card CRUD and study basics', async () => {
   assert.equal(answer.status, 200);
   assert.equal(answer.body.isCorrect, true);
 
-  const markStatus = await request.patch(`/study/cards/${cardId}/status`).set(auth).send({ status: 'needs_review' });
+  const markStatus = await request.patch(`/decks/${deckId}/cards/${cardId}/status`).set(auth).send({ status: 'needs_review' });
   assert.equal(markStatus.status, 200);
 
-  const stats = await request.get(`/stats/decks/${deckId}`).set(auth);
+  const stats = await request.get(`/decks/${deckId}/stats`).set(auth);
   assert.equal(stats.status, 200);
   assert.ok(Array.isArray(stats.body.cardStats));
 
-  const deletedCard = await request.delete(`/cards/${cardId}`).set(auth);
+  const deletedCard = await request.delete(`/decks/${deckId}/cards/${cardId}`).set(auth);
   assert.equal(deletedCard.status, 200);
 
   const deletedDeck = await request.delete(`/decks/${deckId}`).set(auth);

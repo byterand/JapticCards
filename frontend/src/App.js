@@ -461,14 +461,20 @@ function DeckPage() {
       <section className="card">
         <h3>Cards</h3>
         {deck.cards?.map((card) => (
-          <CardEditor key={card._id} card={card} readOnly={deck.readOnly} onSaved={loadDeck} />
+          <CardEditor
+            key={card._id}
+            card={card}
+            deckId={deck._id}
+            readOnly={deck.readOnly}
+            onSaved={loadDeck}
+          />
         ))}
       </section>
     </Layout>
   );
 }
 
-function CardEditor({ card, readOnly, onSaved }) {
+function CardEditor({ card, deckId, readOnly, onSaved }) {
   const [front, setFront] = useState(card.front);
   const [back, setBack] = useState(card.back);
 
@@ -483,10 +489,10 @@ function CardEditor({ card, readOnly, onSaved }) {
         <div className="actions">
           <input value={front} onChange={(e) => setFront(e.target.value)} />
           <input value={back} onChange={(e) => setBack(e.target.value)} />
-          <button type="button" onClick={async () => { await api.updateCard(card._id, { front, back }); onSaved(); }}>
+          <button type="button" onClick={async () => { await api.updateCard(deckId, card._id, { front, back }); onSaved(); }}>
             Save
           </button>
-          <button type="button" onClick={async () => { await api.deleteCard(card._id); onSaved(); }}>
+          <button type="button" onClick={async () => { await api.deleteCard(deckId, card._id); onSaved(); }}>
             Delete
           </button>
         </div>
@@ -615,9 +621,9 @@ function StudyPage() {
             </button>
           </div>
           <div className="actions">
-            <button type="button" onClick={() => api.setCardStatus(current.cardId, "known")}>Known</button>
-            <button type="button" onClick={() => api.setCardStatus(current.cardId, "still_learning")}>Still Learning</button>
-            <button type="button" onClick={() => api.setCardStatus(current.cardId, "needs_review")}>Needs Review</button>
+            <button type="button" onClick={() => api.setCardStatus(id, current.cardId, "known")}>Known</button>
+            <button type="button" onClick={() => api.setCardStatus(id, current.cardId, "still_learning")}>Still Learning</button>
+            <button type="button" onClick={() => api.setCardStatus(id, current.cardId, "needs_review")}>Needs Review</button>
           </div>
         </section>
       )}

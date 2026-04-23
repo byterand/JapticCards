@@ -173,9 +173,9 @@ export async function submitAnswer(user, sessionId, payload) {
   };
 }
 
-export async function setCardStatus(user, cardId, status) {
+export async function setCardStatus(user, deckId, cardId, status) {
   const card = await Card.findById(cardId);
-  if (!card) {
+  if (!card || String(card.deck) !== String(deckId)) {
     throw new HttpError(404, 'Card not found');
   }
   const access = await getAccessibleDeckLean(user, card.deck);

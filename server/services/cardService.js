@@ -23,9 +23,9 @@ export async function createCard(user, deckId, payload) {
   });
 }
 
-export async function updateCard(user, cardId, updates) {
+export async function updateCard(user, deckId, cardId, updates) {
   const card = await Card.findById(cardId);
-  if (!card) {
+  if (!card || String(card.deck) !== String(deckId)) {
     throw new HttpError(404, 'Card not found');
   }
   const access = await getAccessibleDeckLean(user, card.deck);
@@ -44,9 +44,9 @@ export async function updateCard(user, cardId, updates) {
   return card;
 }
 
-export async function deleteCard(user, cardId) {
+export async function deleteCard(user, deckId, cardId) {
   const card = await Card.findById(cardId);
-  if (!card) {
+  if (!card || String(card.deck) !== String(deckId)) {
     throw new HttpError(404, 'Card not found');
   }
   const access = await getAccessibleDeckLean(user, card.deck);

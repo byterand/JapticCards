@@ -76,14 +76,14 @@ export const api = {
       body: JSON.stringify(payload)
     });
   },
-  updateCard(cardId, payload) {
-    return request(`/cards/${cardId}`, {
+  updateCard(deckId, cardId, payload) {
+    return request(`/decks/${deckId}/cards/${cardId}`, {
       method: "PATCH",
       body: JSON.stringify(payload)
     });
   },
-  deleteCard(cardId) {
-    return request(`/cards/${cardId}`, { method: "DELETE" });
+  deleteCard(deckId, cardId) {
+    return request(`/decks/${deckId}/cards/${cardId}`, { method: "DELETE" });
   },
   createSession(payload) {
     return request("/study/sessions", {
@@ -103,14 +103,14 @@ export const api = {
       body: JSON.stringify({ enabled })
     });
   },
-  setCardStatus(cardId, status) {
-    return request(`/study/cards/${cardId}/status`, {
+  setCardStatus(deckId, cardId, status) {
+    return request(`/decks/${deckId}/cards/${cardId}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status })
     });
   },
   getStats(deckId) {
-    return request(`/stats/decks/${deckId}`);
+    return request(`/decks/${deckId}/stats`);
   },
   getStudents() {
     return request("/teacher/students");
