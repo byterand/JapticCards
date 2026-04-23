@@ -1,0 +1,150 @@
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import Layout from "../components/Layout";
+import CardEditor from "../components/CardEditor";
+import { api } from "../services/api";
+
+export default function DeckPage() {
+  const { id } = useParams();
+  const [deck, setDeck] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [front, setFront] = useState("");
+  const [back, setBack] = useState("");
+  const [frontImage, setFrontImage] = useState("");
+  const [backImage, setBackImage] = useState("");
+  const [error, setError] = useState("");
+
+  const loadDeck = useCallback(async () => {
+    try {
+      const data = await api.getDeck(id);
+      setDeck(data);
+      setTitle(data.title);
+      setDescription(data.description || "");
+      setCategory(data.category || "");
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadDeck();
+  }, [loadDeck]);
+
+  async function uploadImage(file) {
+    try {
+      return await api.uploadCardImage(file);
+    } catch (err) {
+      setError(err.message);
+      return "";
+    }
+  }
+
+  if (!deck) {
+    return (
+      <Layout>
+        {error ? <p className="error">{error}</p> : <p>Loading deck...</p>}
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <section className="card">
+        <h2>{deck.title}</h2>
+        <p>{deck.description}</p>
+        <p><strong>Category:</strong> {deck.category || "None"}</p>
+        {!deck.readOnly && (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await api.updateDeck(deck._id, { title, description, category });
+              await loadDeck();
+            }}
+          >
+            <h3>Edit Deck</h3>
+            <label>
+              Title
+              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </label>
+            <label>
+              Description
+              <input value={description} onChange={(e) => setDescription(e.target.value)} />
+            </label>
+            <label>
+              Category
+              <input value={category} onChange={(e) => setCategory(e.target.value)} />
+            </label>
+            <button type="submit">Save Deck</button>
+          </form>
+        )}
+      </section>
+
+      {!deck.readOnly && (
+        <section className="card">
+          <h3>Add Card</h3>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await api.addCard(deck._id, { front, back, frontImage, backImage });
+              setFront("");
+              setBack("");
+              setFrontImage("");
+              setBackImage("");
+              e.target.reset();
+              await loadDeck();
+            }}
+          >
+            <label>
+              Front
+              <input value={front} onChange={(e) => setFront(e.target.value)} required />
+            </label>
+            <label>
+              Back
+              <input value={back} onChange={(e) => setBack(e.target.value)} required />
+            </label>
+            <label>
+              Front Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files[0]) {
+                    setFrontImage(await uploadImage(e.target.files[0]));
+                  }
+                }}
+              />
+            </label>
+            <label>
+              Back Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files[0]) {
+                    setBackImage(await uploadImage(e.target.files[0]));
+                  }
+                }}
+              />
+            </label>
+            <button type="submit">Add Card</button>
+          </form>
+        </section>
+      )}
+
+      <section className="card">
+        <h3>Cards</h3>
+        {deck.cards?.map((card) => (
+          <CardEditor
+            key={card._id}
+            card={card}
+            deckId={deck._id}
+            readOnly={deck.readOnly}
+            onSaved={loadDeck}
+          />
+        ))}
+      </section>
+    </Layout>
+  );
+}
