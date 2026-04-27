@@ -189,6 +189,16 @@ export async function submitAnswer(user, sessionId, payload) {
       throw new HttpError(400, 'Unsupported study mode');
   }
 
+  const claimed = await StudySession.findOneAndUpdate(
+    { _id: sessionId, user: user.userId, answeredCardIds: { $ne: card._id } },
+    { $addToSet: { answeredCardIds: card._id } },
+    { new: true, projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
+  );
+
+  if (!claimed) {
+    throw new HttpError(409, 'Card already answered in this session');
+  }
+
   const progress = await CardProgress.findOneAndUpdate(
     { user: user.userId, card: card._id },
     {
@@ -201,18 +211,10 @@ export async function submitAnswer(user, sessionId, payload) {
     { upsert: true, returnDocument: 'after' }
   );
 
-  // Track answered cards via $addToSet so duplicate submissions don't grow
-  // the set, and flip completed when every card has been answered at least
-  // once. Two-step (read-then-set) is fine here: completed is monotonic.
-  const tracked = await StudySession.findOneAndUpdate(
-    { _id: sessionId, user: user.userId },
-    { $addToSet: { answeredCardIds: card._id } },
-    { new: true, projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
-  );
-  let completed = Boolean(tracked?.completed);
-  if (!completed && tracked) {
-    const total = tracked.originalCardOrder?.length || 0;
-    const answered = tracked.answeredCardIds?.length || 0;
+  let completed = Boolean(claimed.completed);
+  if (!completed) {
+    const total = claimed.originalCardOrder?.length || 0;
+    const answered = claimed.answeredCardIds?.length || 0;
     if (total > 0 && answered >= total) {
       await StudySession.updateOne(
         { _id: sessionId, user: user.userId, completed: false },

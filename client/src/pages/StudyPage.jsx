@@ -17,6 +17,7 @@ export default function StudyPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
 
   const current = session?.questions?.[index];
@@ -46,21 +47,28 @@ export default function StudyPage() {
   }, [starting, id, mode, sideFirst, needsReviewOnly]);
 
   const submitAnswer = useCallback(async (payload) => {
-    if (!session || !current) return;
+    if (!session || !current || submitting || result) return;
+    setSubmitting(true);
     setError("");
+
     try {
       const res = await api.answerSession(session.sessionId, {
         cardId: current.cardId,
         ...payload
       });
       setResult(res.isCorrect ? "Correct" : `Incorrect (expected: ${res.expected})`);
-      if (res.completed) setSessionDone(true);
+
+      if (res.completed)
+        setSessionDone(true);
+
       const statRes = await api.getStats(id);
       setStats(statRes);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
-  }, [session, current, id]);
+  }, [session, current, id, submitting, result]);
 
   const updateCardStatus = useCallback(async (status) => {
     if (!current) return;
