@@ -72,8 +72,6 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
   const resolvedMode = mode || 'flip';
   const resolvedSideFirst = sideFirst || 'front';
 
-  // Build the response payload (what the client sees) and, in parallel, the
-  // persisted question state (server-only ground truth used by submitAnswer).
   const persistedQuestions = [];
   const questions = cards.map((card) => {
     if (resolvedMode === 'multiple_choice') {
@@ -145,8 +143,6 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(400, 'Flip mode does not accept submitted answers');
   }
 
-  // Enforce that the card being answered is actually part of THIS session.
-  // Without this, a user could submit answers for cards outside their review set
   const inSession = session.originalCardOrder.some(
     (id) => String(id) === String(payload.cardId)
   );
@@ -159,9 +155,6 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(404, 'Card not found in this session');
   }
 
-  // Look up the question state the server actually issued for this card.
-  // This is the source of truth for grading MC and T/F -- never trust the
-  // client's `answer`/`selectedOption` for correctness on its own.
   const question = session.questions?.find(
     (q) => String(q.cardId) === String(payload.cardId)
   );
@@ -185,8 +178,6 @@ export async function submitAnswer(user, sessionId, payload) {
     isCorrect = String(payload.answer || '').trim().toLowerCase()
       === String(card.back).trim().toLowerCase();
   } else {
-    // Defense in depth: flip is rejected at the top of this function, so any
-    // other mode that reaches here means the enum has drifted.
     throw new HttpError(400, 'Unsupported study mode');
   }
 
