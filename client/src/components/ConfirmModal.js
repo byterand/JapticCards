@@ -10,47 +10,52 @@ export default function ConfirmModal({
   onConfirm,
   onCancel
 }) {
+  const dialogRef = useRef(null);
   const confirmBtnRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.key === "Escape") onCancel();
-    };
-    window.addEventListener("keydown", onKey);
-    confirmBtnRef.current?.focus();
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open) {
+      if (!dialog.open) dialog.showModal();
+      queueMicrotask(() => confirmBtnRef.current?.focus());
+    } else if (dialog.open) {
+      dialog.close();
+    }
+  }, [open]);
 
-  if (!open) return null;
+  const handleCancelEvent = (e) => {
+    e.preventDefault();
+    onCancel();
+  };
+
+  // Backdrop click: if the user clicks the dialog element itself (the
+  // backdrop area, outside the inner content), treat it as cancel.
+  const handleBackdropClick = (e) => {
+    if (e.target === dialogRef.current) onCancel();
+  };
 
   return (
-    <div
-      className="modalOverlay"
-      role="presentation"
-      onClick={onCancel}
+    <dialog
+      ref={dialogRef}
+      className="modal"
+      aria-labelledby="confirm-modal-title"
+      onCancel={handleCancelEvent}
+      onClick={handleBackdropClick}
     >
-      <div
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 id="confirm-modal-title">{title}</h3>
-        {message && <p>{message}</p>}
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel}>{cancelLabel}</button>
-          <button
-            ref={confirmBtnRef}
-            type="button"
-            className={danger ? "btn-danger" : ""}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </button>
-        </div>
+      <h3 id="confirm-modal-title">{title}</h3>
+      {message && <p>{message}</p>}
+      <div className="modal-actions">
+        <button type="button" onClick={onCancel}>{cancelLabel}</button>
+        <button
+          ref={confirmBtnRef}
+          type="button"
+          className={danger ? "btn-danger" : ""}
+          onClick={onConfirm}
+        >
+          {confirmLabel}
+        </button>
       </div>
-    </div>
+    </dialog>
   );
 }
