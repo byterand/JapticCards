@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 
 /**
@@ -19,6 +19,13 @@ import ConfirmModal from "../components/ConfirmModal";
  */
 export default function useConfirm() {
   const [pending, setPending] = useState(null);
+
+  const pendingRef = useRef(null);
+  pendingRef.current = pending;
+
+  useEffect(() => () => {
+    pendingRef.current?.resolve(false);
+  }, []);
 
   const confirm = useCallback((options) => {
     return new Promise((resolve) => {

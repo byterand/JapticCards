@@ -1,30 +1,42 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES, USER_ROLES } from "../constants";
 
 export default function AuthForm({ registerMode = false }) {
-  const { login, register } = useAuth();
+  const { user, login, register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(USER_ROLES.STUDENT);
   const [error, setError] = useState("");
 
+  const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
+
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    let stage = "login";
     try {
       if (registerMode) {
+        stage = "register";
         await register({ username, password, role });
-        await login(username, password);
-      } else {
-        await login(username, password);
+        stage = "auto-login";
       }
-      navigate(ROUTES.DASHBOARD);
+      await login(username, password);
+      navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      if (stage === "auto-login") {
+        setError(`Account created, but automatic sign-in failed: ${err.message}. You can sign in manually.`);
+      } else {
+        setError(err.message);
+      }
     }
   };
 

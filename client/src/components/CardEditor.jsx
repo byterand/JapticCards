@@ -11,11 +11,10 @@ export default function CardEditor({ card, deckId, readOnly, onSaved, onError })
     if (onError) onError(err.message);
   }, [onError]);
 
-  // Sync inputs when the card prop changes
   useEffect(() => {
     setFront(card.front);
     setBack(card.back);
-  }, [card._id, card.front, card.back]);
+  }, [card._id]);
 
   const handleSave = useCallback(async () => {
     try {

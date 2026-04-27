@@ -143,9 +143,9 @@ export default function StudyPage() {
           {mode === STUDY_MODES.MULTIPLE_CHOICE && (
             <div>
               <p>{current.prompt}</p>
-              {current.options.map((opt) => (
+              {current.options.map((opt, idx) => (
                 <button
-                  key={opt}
+                  key={`${current.cardId}-${idx}`}
                   type="button"
                   onClick={() => submitAnswer({ selectedOption: opt })}
                 >
