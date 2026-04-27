@@ -20,7 +20,7 @@ export default function StudyPage() {
 
   const current = session?.questions?.[index];
 
-  // Reset per-card  state when navigating between cards or starting a new session
+  // Reset per-card state when navigating between cards or starting a new session
   useEffect(() => {
     setFlipped(false);
     setTypedAnswer("");

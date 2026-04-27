@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
@@ -5,7 +6,7 @@ import App from "./App";
 describe("App auth routing", () => {
   beforeEach(() => {
     localStorage.clear();
-    global.fetch = jest.fn(async () => ({
+    globalThis.fetch = vi.fn(async () => ({
       ok: false,
       status: 401,
       headers: { get: () => "application/json" },
@@ -14,7 +15,7 @@ describe("App auth routing", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test("redirects protected dashboard to login when unauthenticated", async () => {

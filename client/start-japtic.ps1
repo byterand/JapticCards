@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $serverDir = Join-Path $repoRoot "server"
-$frontendDir = Join-Path $repoRoot "frontend"
+$clientDir = Join-Path $repoRoot "client"
 $serverEnv = Join-Path $serverDir ".env"
 $serverEnvExample = Join-Path $serverDir ".env.example"
 
@@ -14,8 +14,8 @@ if (!(Test-Path $serverDir)) {
   Write-Error "Could not find server folder at: $serverDir"
 }
 
-if (!(Test-Path $frontendDir)) {
-  Write-Error "Could not find frontend folder at: $frontendDir"
+if (!(Test-Path $clientDir)) {
+  Write-Error "Could not find client folder at: $clientDir"
 }
 
 if (!(Test-Path $serverEnv)) {
@@ -65,26 +65,26 @@ function Ensure-Dependencies($dir, $name) {
 }
 
 Ensure-Dependencies $serverDir "backend"
-Ensure-Dependencies $frontendDir "frontend"
+Ensure-Dependencies $clientDir "client"
 
 $backendCommand = "Set-Location -LiteralPath '$serverDir'; npm start"
-$frontendCommand = "Set-Location -LiteralPath '$frontendDir'; npm start"
+$clientCommand = "Set-Location -LiteralPath '$clientDir'; npm start"
 
 Write-Host "Starting backend..." -ForegroundColor Green
 Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $backendCommand | Out-Null
 
 Start-Sleep -Seconds 2
 
-Write-Host "Starting frontend..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $frontendCommand | Out-Null
+Write-Host "Starting client..." -ForegroundColor Green
+Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $clientCommand | Out-Null
 
 Start-Sleep -Seconds 2
 Start-Process "http://localhost:3000" | Out-Null
 
 Write-Host ""
 Write-Host "Japtic Cards is launching." -ForegroundColor Green
-Write-Host "Backend:  http://localhost:5000"
-Write-Host "Frontend: http://localhost:3000"
+Write-Host "Backend: http://localhost:5000"
+Write-Host "Client:  http://localhost:3000"
 Write-Host "Note: make sure MongoDB is running on mongodb://127.0.0.1:27017"
 Write-Host ""
 Write-Host "Tip: run with -SkipInstall to skip dependency checks."
