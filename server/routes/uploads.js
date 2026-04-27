@@ -53,7 +53,7 @@ function handleMulter(req, res, next) {
 const router = Router();
 
 router.post('/image', verifyToken, handleMulter, (req, res) => {
-  if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+  if (!req.file) throw new HttpError(400, 'No image uploaded');
   return res.status(201).json({ url: `/uploads/cards/${req.file.filename}` });
 });
 

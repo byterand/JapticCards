@@ -141,6 +141,10 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(404, 'Session not found');
   }
 
+  if (session.mode === 'flip') {
+    throw new HttpError(400, 'Flip mode does not accept submitted answers');
+  }
+
   // Enforce that the card being answered is actually part of THIS session.
   // Without this, a user could submit answers for cards outside their review set
   const inSession = session.originalCardOrder.some(
@@ -181,7 +185,9 @@ export async function submitAnswer(user, sessionId, payload) {
     isCorrect = String(payload.answer || '').trim().toLowerCase()
       === String(card.back).trim().toLowerCase();
   } else {
-    isCorrect = true;
+    // Defense in depth: flip is rejected at the top of this function, so any
+    // other mode that reaches here means the enum has drifted.
+    throw new HttpError(400, 'Unsupported study mode');
   }
 
   const progress = await CardProgress.findOneAndUpdate(

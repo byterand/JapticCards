@@ -97,12 +97,14 @@ export async function rotateRefreshToken(oldRefreshToken) {
   }
   if (payload.typ !== 'refresh') throw new HttpError(401, 'Wrong token type');
 
-  let stored = await RefreshToken.findOne({ jti: payload.jti });
+  const stored = await RefreshToken.findOne({ jti: payload.jti });
   if (!stored || stored.tokenHash !== hashToken(oldRefreshToken)) {
     // Unknown jti OR hash mismatch
     throw new HttpError(401, 'Invalid refresh token');
   }
 
+  let toRotateId = stored._id;
+  let family = stored.family;
   if (stored.revokedAt) {
     const graceMs = config.jwt.refreshGraceSeconds * 1000;
     const withinGrace = Date.now() - stored.revokedAt.getTime() <= graceMs;
@@ -115,16 +117,25 @@ export async function rotateRefreshToken(oldRefreshToken) {
     }
     const active = await RefreshToken.findOne({ family: stored.family, revokedAt: null });
     if (!active) throw new HttpError(401, 'Session closed');
-    stored = active;
+    toRotateId = active._id;
+    family = active.family;
   }
 
-  const user = await User.findById(stored.userId);
+  const claimed = await RefreshToken.findOneAndUpdate(
+    { _id: toRotateId, revokedAt: null },
+    { $set: { revokedAt: new Date() } },
+    { new: true }
+  );
+  if (!claimed) {
+    throw new HttpError(401, 'Refresh token already rotated');
+  }
+
+  const user = await User.findById(claimed.userId);
   if (!user) throw new HttpError(401, 'User no longer exists');
 
-  const { token: newRefresh, jti: newJti } = await issueRefreshToken(user, stored.family);
-  stored.revokedAt = new Date();
-  stored.replacedByJti = newJti;
-  await stored.save();
+  const { token: newRefresh, jti: newJti } = await issueRefreshToken(user, family);
+  claimed.replacedByJti = newJti;
+  await claimed.save();
 
   const { token: newAccess } = signAccessToken(user);
   return {
