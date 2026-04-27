@@ -1,0 +1,18 @@
+{
+  "name": "japticcards",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server start",
+    "dev:client": "npm --workspace client run dev",
+    "test": "npm --workspaces --if-present run test",
+    "build": "npm --workspace client run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

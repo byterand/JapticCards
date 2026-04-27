@@ -124,7 +124,7 @@ export async function rotateRefreshToken(oldRefreshToken) {
   const claimed = await RefreshToken.findOneAndUpdate(
     { _id: toRotateId, revokedAt: null },
     { $set: { revokedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (!claimed) {
     throw new HttpError(401, 'Refresh token already rotated');
