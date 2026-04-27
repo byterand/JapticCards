@@ -6,7 +6,7 @@ import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
 import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
-import { deleteManagedImagesForCard } from '../utils/cardImages.js';
+import { deleteManagedImagesForCard, inlineManagedImage, persistInlineImage } from '../utils/cardImages.js';
 
 export async function listUserDecks(userId) {
   const assignments = await Assignment.find({ student: userId }).select('deck');
@@ -96,17 +96,18 @@ export async function exportDeck(user, deckId, format) {
     throw new HttpError(404, 'Deck not found');
   }
   const cards = await Card.find({ deck: deckId }).sort({ order: 1 }).lean();
+  const exportedCards = await Promise.all(cards.map(async (card) => ({
+    front: card.front,
+    back: card.back,
+    frontImage: await inlineManagedImage(card.frontImage || ''),
+    backImage: await inlineManagedImage(card.backImage || '')
+  })));
   const payload = {
     title: access.deck.title,
     description: access.deck.description,
     category: access.deck.category,
     tags: access.deck.tags,
-    cards: cards.map((card) => ({
-      front: card.front,
-      back: card.back,
-      frontImage: card.frontImage || '',
-      backImage: card.backImage || ''
-    }))
+    cards: exportedCards
   };
 
   if (format === 'json') {
@@ -184,15 +185,15 @@ export async function importDeck(userId, { format, content }) {
     category: data.category || '',
     tags: data.tags || []
   });
-  const cards = data.cards.map((card, index) => ({
+  const cards = await Promise.all(data.cards.map(async (card, index) => ({
     owner: userId,
     deck: deck._id,
     front: card.front,
     back: card.back,
-    frontImage: card.frontImage || '',
-    backImage: card.backImage || '',
+    frontImage: await persistInlineImage(card.frontImage || ''),
+    backImage: await persistInlineImage(card.backImage || ''),
     order: index
-  }));
+  })));
   await Card.insertMany(cards);
   return { deckId: deck._id };
 }

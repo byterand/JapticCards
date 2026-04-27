@@ -234,7 +234,8 @@ export default function StudyPage() {
         <section className="card">
           <h3>Stats</h3>
           <p>Cards Studied: {stats.cardsStudied}</p>
-          <p>Accuracy: {Math.round(stats.accuracyRate * 100)}%</p>
+          <p>Total Attempts: {stats.totalAttempts}</p>
+          <p>Accuracy: {(stats.accuracyRate * 100).toFixed(1)}%</p>
         </section>
       )}
     </Layout>

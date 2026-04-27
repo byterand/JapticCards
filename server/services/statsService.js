@@ -18,10 +18,12 @@ export async function getDeckStats(user, deckId) {
 
   let correctCount = 0;
   let incorrectCount = 0;
+  let cardsStudied = 0;
   const cardStats = cards.map((card) => {
     const p = progressMap.get(String(card._id));
     const cardCorrect = p?.correctCount || 0;
     const cardIncorrect = p?.incorrectCount || 0;
+    if (cardCorrect + cardIncorrect > 0) cardsStudied += 1;
     correctCount += cardCorrect;
     incorrectCount += cardIncorrect;
     return {
@@ -33,12 +35,13 @@ export async function getDeckStats(user, deckId) {
     };
   });
 
-  const cardsStudied = correctCount + incorrectCount;
+  const totalAttempts = correctCount + incorrectCount;
   return {
     cardsStudied,
+    totalAttempts,
     correctCount,
     incorrectCount,
-    accuracyRate: cardsStudied ? Number((correctCount / cardsStudied).toFixed(2)) : 0,
+    accuracyRate: totalAttempts ? correctCount / totalAttempts : 0,
     cardStats
   };
 }
