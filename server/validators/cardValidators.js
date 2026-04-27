@@ -9,4 +9,11 @@ export const cardRules = [
   body('backImage').optional().isString().isLength({ max: 2048 })
 ];
 
-export const cardUpdateRules = cardRules.map((rule) => rule.optional());
+export const cardUpdateRules = [
+  body('front').optional().trim().notEmpty().isLength({ max: 500 })
+    .withMessage('Front must be 1-500 characters'),
+  body('back').optional().trim().notEmpty().isLength({ max: 2000 })
+    .withMessage('Back must be 1-2000 characters'),
+  body('frontImage').optional().isString().isLength({ max: 2048 }),
+  body('backImage').optional().isString().isLength({ max: 2048 })
+];

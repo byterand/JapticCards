@@ -9,7 +9,14 @@ export const deckRules = [
     .withMessage('Each tag must be a non-empty string')
 ];
 
-export const deckUpdateRules = deckRules.map((rule) => rule.optional());
+export const deckUpdateRules = [
+  body('title').optional().trim().notEmpty(),
+  body('description').optional().isString(),
+  body('category').optional().isString(),
+  body('tags').optional().isArray(),
+  body('tags.*').optional().isString().trim().notEmpty()
+    .withMessage('Each tag must be a non-empty string')
+];
 
 export const importRules = [
   body('format')
