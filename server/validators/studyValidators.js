@@ -15,7 +15,7 @@ export const answerRules = [
   body('cardId').notEmpty(),
   body('answer').optional(),
   body('selectedOption').optional(),
-  body('isTrue').optional()
+  body('isTrue').optional().isBoolean().withMessage('isTrue must be a boolean').toBoolean()
 ];
 
 export const cardStatusRules = [

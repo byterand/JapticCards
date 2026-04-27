@@ -68,34 +68,38 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
       : 'Deck has no cards');
   }
 
+  const distractorPool = needsReviewOnly
+    ? await Card.find({ deck: deckId }).select('_id back').lean()
+    : cards;
+
   const originalCardOrder = cards.map((card) => card._id);
   const resolvedMode = mode || 'flip';
   const resolvedSideFirst = sideFirst || 'front';
 
   const persistedQuestions = [];
   const questions = cards.map((card) => {
-    if (resolvedMode === 'multiple_choice') {
-      const { prompt, options, correctAnswer } = buildMultipleChoiceQuestion(card, cards);
-      persistedQuestions.push({ cardId: card._id, options, correctAnswer });
-      return { cardId: card._id, prompt, options };
+    switch (resolvedMode) {
+      case 'multiple_choice':
+        const { prompt, options, correctAnswer } = buildMultipleChoiceQuestion(card, distractorPool);
+        persistedQuestions.push({ cardId: card._id, options, correctAnswer });
+        return { cardId: card._id, prompt, options };
+      case 'true_false':
+        const { statement, statementTrue } = buildTrueFalseQuestion(card, distractorPool);
+        persistedQuestions.push({ cardId: card._id, statement, statementTrue });
+        return { cardId: card._id, statement };
+      case 'written_answer':
+        persistedQuestions.push({ cardId: card._id });
+        return { cardId: card._id, prompt: card.front };
+      default:
+        persistedQuestions.push({ cardId: card._id });
+        return {
+          cardId: card._id,
+          front: card.front,
+          back: card.back,
+          frontImage: card.frontImage,
+          backImage: card.backImage
+        };
     }
-    if (resolvedMode === 'true_false') {
-      const { statement, statementTrue } = buildTrueFalseQuestion(card, cards);
-      persistedQuestions.push({ cardId: card._id, statement, statementTrue });
-      return { cardId: card._id, statement };
-    }
-    if (resolvedMode === 'written_answer') {
-      persistedQuestions.push({ cardId: card._id });
-      return { cardId: card._id, prompt: card.front };
-    }
-    persistedQuestions.push({ cardId: card._id });
-    return {
-      cardId: card._id,
-      front: card.front,
-      back: card.back,
-      frontImage: card.frontImage,
-      backImage: card.backImage
-    };
   });
 
   const session = await StudySession.create({
@@ -143,9 +147,8 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(400, 'Flip mode does not accept submitted answers');
   }
 
-  const inSession = session.originalCardOrder.some(
-    (id) => String(id) === String(payload.cardId)
-  );
+  const inSession = session.originalCardOrder.some((id) => String(id) === String(payload.cardId));
+
   if (!inSession) {
     throw new HttpError(400, 'Card is not part of this session');
   }
@@ -155,30 +158,38 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(404, 'Card not found in this session');
   }
 
-  const question = session.questions?.find(
-    (q) => String(q.cardId) === String(payload.cardId)
-  );
+  const question = session.questions?.find((q) => String(q.cardId) === String(payload.cardId));
 
   let isCorrect;
-  if (session.mode === 'multiple_choice') {
-    if (!question || !Array.isArray(question.options) || question.options.length === 0) {
-      throw new HttpError(400, 'Question state missing for this card');
-    }
-    const selected = String(payload.selectedOption || '');
-    if (!question.options.includes(selected)) {
-      throw new HttpError(400, 'Selected option was not offered for this question');
-    }
-    isCorrect = selected === String(question.correctAnswer);
-  } else if (session.mode === 'true_false') {
-    if (!question || typeof question.statementTrue !== 'boolean') {
-      throw new HttpError(400, 'Question state missing for this card');
-    }
-    isCorrect = Boolean(payload.isTrue) === Boolean(question.statementTrue);
-  } else if (session.mode === 'written_answer') {
-    isCorrect = String(payload.answer || '').trim().toLowerCase()
-      === String(card.back).trim().toLowerCase();
-  } else {
-    throw new HttpError(400, 'Unsupported study mode');
+  switch (session.mode) {
+    case 'multiple_choice':
+      if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+        throw new HttpError(400, 'Question state missing for this card');
+      }
+
+      const selected = String(payload.selectedOption || '');
+      if (!question.options.includes(selected)) {
+        throw new HttpError(400, 'Selected option was not offered for this question');
+      }
+
+      isCorrect = selected === String(question.correctAnswer);
+      break;
+    case 'true_false':
+      if (!question || typeof question.statementTrue !== 'boolean') {
+        throw new HttpError(400, 'Question state missing for this card');
+      }
+
+      if (typeof payload.isTrue !== 'boolean') {
+        throw new HttpError(400, 'isTrue must be a boolean for true_false mode');
+      }
+
+      isCorrect = payload.isTrue === question.statementTrue;
+      break;
+    case 'written_answer':
+      isCorrect = String(payload.answer || '').trim().toLowerCase() === String(card.back).trim().toLowerCase();
+      break;
+    default:
+      throw new HttpError(400, 'Unsupported study mode');
   }
 
   const progress = await CardProgress.findOneAndUpdate(
