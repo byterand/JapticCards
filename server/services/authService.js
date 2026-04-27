@@ -7,18 +7,17 @@ import RefreshToken from '../models/RefreshToken.js';
 import { HttpError } from '../utils/HttpError.js';
 import { config } from '../config/env.js';
 import { invalidateJti } from '../utils/revocationCache.js';
+import { jwtVerifyOptions, jwtSignOptions } from '../utils/jwtOptions.js';
+import { REFRESH_TOKEN_TYPE } from '../utils/constants.js';
 
 const SALT_ROUNDS = 10;
 
-const verifyOptions = () => ({
-  algorithms: [config.jwt.algorithm],
-  issuer: config.jwt.issuer,
-  audience: config.jwt.audience,
-  clockTolerance: config.jwt.clockToleranceSeconds
-});
-
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function publicUser(user) {
+  return { id: user._id, username: user.username, role: user.role };
 }
 
 function signAccessToken(user) {
@@ -26,13 +25,7 @@ function signAccessToken(user) {
   const token = jwt.sign(
     { userId: user._id, role: user.role },
     config.jwtSecret,
-    {
-      algorithm: config.jwt.algorithm,
-      issuer: config.jwt.issuer,
-      audience: config.jwt.audience,
-      expiresIn: config.jwt.accessTtlSeconds,
-      jwtid: jti
-    }
+    jwtSignOptions({ expiresIn: config.jwt.accessTtlSeconds, jwtid: jti })
   );
   return { token, jti };
 }
@@ -41,15 +34,9 @@ async function issueRefreshToken(user, family) {
   const jti = crypto.randomUUID();
   const fam = family || crypto.randomUUID();
   const token = jwt.sign(
-    { userId: user._id, family: fam, typ: 'refresh' },
+    { userId: user._id, family: fam, typ: REFRESH_TOKEN_TYPE },
     config.jwtSecret,
-    {
-      algorithm: config.jwt.algorithm,
-      issuer: config.jwt.issuer,
-      audience: config.jwt.audience,
-      expiresIn: config.jwt.refreshTtlSeconds,
-      jwtid: jti
-    }
+    jwtSignOptions({ expiresIn: config.jwt.refreshTtlSeconds, jwtid: jti })
   );
   const expiresAt = new Date(Date.now() + config.jwt.refreshTtlSeconds * 1000);
   await RefreshToken.create({
@@ -60,6 +47,26 @@ async function issueRefreshToken(user, family) {
     expiresAt
   });
   return { token, jti, family: fam };
+}
+
+function verifyRefreshToken(token) {
+  let payload;
+  try {
+    payload = jwt.verify(token, config.jwtSecret, jwtVerifyOptions());
+  } catch {
+    throw new HttpError(401, 'Invalid refresh token');
+  }
+  if (payload.typ !== REFRESH_TOKEN_TYPE) {
+    throw new HttpError(401, 'Wrong token type');
+  }
+  return payload;
+}
+
+async function revokeFamily(family) {
+  await RefreshToken.updateMany(
+    { family, revokedAt: null },
+    { $set: { revokedAt: new Date() } }
+  );
 }
 
 export async function registerUser({ username, password, role }) {
@@ -79,23 +86,13 @@ export async function loginUser({ username, password }) {
   const { token: accessToken } = signAccessToken(user);
   const { token: refreshToken } = await issueRefreshToken(user);
 
-  return {
-    token: accessToken,
-    refreshToken,
-    user: { id: user._id, username: user.username, role: user.role }
-  };
+  return { token: accessToken, refreshToken, user: publicUser(user) };
 }
 
 export async function rotateRefreshToken(oldRefreshToken) {
   if (!oldRefreshToken) throw new HttpError(401, 'No refresh token');
 
-  let payload;
-  try {
-    payload = jwt.verify(oldRefreshToken, config.jwtSecret, verifyOptions());
-  } catch {
-    throw new HttpError(401, 'Invalid refresh token');
-  }
-  if (payload.typ !== 'refresh') throw new HttpError(401, 'Wrong token type');
+  const payload = verifyRefreshToken(oldRefreshToken);
 
   const stored = await RefreshToken.findOne({ jti: payload.jti });
   if (!stored || stored.tokenHash !== hashToken(oldRefreshToken)) {
@@ -109,10 +106,7 @@ export async function rotateRefreshToken(oldRefreshToken) {
     const graceMs = config.jwt.refreshGraceSeconds * 1000;
     const withinGrace = Date.now() - stored.revokedAt.getTime() <= graceMs;
     if (!withinGrace) {
-      await RefreshToken.updateMany(
-        { family: stored.family, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
-      );
+      await revokeFamily(stored.family);
       throw new HttpError(401, 'Refresh token reuse detected');
     }
     const active = await RefreshToken.findOne({ family: stored.family, revokedAt: null });
@@ -138,11 +132,7 @@ export async function rotateRefreshToken(oldRefreshToken) {
   await claimed.save();
 
   const { token: newAccess } = signAccessToken(user);
-  return {
-    token: newAccess,
-    refreshToken: newRefresh,
-    user: { id: user._id, username: user.username, role: user.role }
-  };
+  return { token: newAccess, refreshToken: newRefresh, user: publicUser(user) };
 }
 
 export async function revokeSession({ accessJti, accessExp, refreshToken }) {
@@ -157,12 +147,9 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
   }
   if (refreshToken) {
     try {
-      const payload = jwt.verify(refreshToken, config.jwtSecret, verifyOptions());
+      const payload = jwt.verify(refreshToken, config.jwtSecret, jwtVerifyOptions());
       if (payload.family) {
-        await RefreshToken.updateMany(
-          { family: payload.family, revokedAt: null },
-          { $set: { revokedAt: new Date() } }
-        );
+        await revokeFamily(payload.family);
       }
     } catch {
       // Invalid refresh token on logout is a no-op.
@@ -173,5 +160,5 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
 export async function getCurrentUser(userId) {
   const user = await User.findById(userId).select('_id username role');
   if (!user) throw new HttpError(404, 'User not found');
-  return { id: user._id, username: user.username, role: user.role };
+  return publicUser(user);
 }

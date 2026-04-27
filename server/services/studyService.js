@@ -4,19 +4,31 @@ import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { HttpError } from '../utils/HttpError.js';
+import { STUDY_MODES, CARD_STATUS, CARD_SIDES } from '../utils/constants.js';
+
+const MC_OPTION_COUNT = 4;
+const MC_DISTRACTOR_COUNT = MC_OPTION_COUNT - 1;
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function sameId(a, b) {
+  return String(a) === String(b);
+}
 
 // Returns the prompt + options the client sees AND the correctAnswer that
 // stays server-side (persisted on the session, never returned to the client).
 function buildMultipleChoiceQuestion(card, cards) {
   const distractors = cards
-    .filter((c) => String(c._id) !== String(card._id))
+    .filter((c) => !sameId(c._id, card._id))
     .map((c) => c.back)
     .filter(Boolean);
-  const uniqueDistractors = [...new Set(distractors)].slice(0, 3);
-  while (uniqueDistractors.length < 3) {
+  const uniqueDistractors = [...new Set(distractors)].slice(0, MC_DISTRACTOR_COUNT);
+  while (uniqueDistractors.length < MC_DISTRACTOR_COUNT) {
     uniqueDistractors.push(`${card.back} (alt ${uniqueDistractors.length + 1})`);
   }
-  const options = shuffleArray([card.back, ...uniqueDistractors]).slice(0, 4);
+  const options = shuffleArray([card.back, ...uniqueDistractors]).slice(0, MC_OPTION_COUNT);
   return { prompt: card.front, options, correctAnswer: card.back };
 }
 
@@ -26,22 +38,79 @@ function buildTrueFalseQuestion(card, cards) {
   // Only pick a wrong candidate whose back differs from this card's back,
   // otherwise "false" would actually be true.
   const wrongCandidates = cards.filter((c) =>
-    String(c._id) !== String(card._id) && c.back && c.back !== card.back);
-  const wrongCard = wrongCandidates.length
-    ? wrongCandidates[Math.floor(Math.random() * wrongCandidates.length)]
-    : null;
-  const useCorrect = Math.random() > 0.5 || !wrongCard;
-  if (useCorrect) {
-    return {
-      statement: `${card.front} -> ${card.back}`,
-      statementTrue: true
-    };
-  }
+    !sameId(c._id, card._id) && c.back && c.back !== card.back);
+  const wrongCard = wrongCandidates.length ? pickRandom(wrongCandidates) : null;
+  const useCorrect = !wrongCard || Math.random() > 0.5;
+  const back = useCorrect ? card.back : wrongCard.back;
   return {
-    statement: `${card.front} -> ${wrongCard.back}`,
-    statementTrue: false
+    statement: `${card.front} -> ${back}`,
+    statementTrue: useCorrect
   };
 }
+
+// Build the per-mode question payload (client view) and the persisted record
+// (server-only state) for a single card.
+function buildQuestionForMode(mode, card, distractorPool) {
+  switch (mode) {
+    case STUDY_MODES.MULTIPLE_CHOICE: {
+      const { prompt, options, correctAnswer } = buildMultipleChoiceQuestion(card, distractorPool);
+      return {
+        clientView: { cardId: card._id, prompt, options },
+        persisted: { cardId: card._id, options, correctAnswer }
+      };
+    }
+    case STUDY_MODES.TRUE_FALSE: {
+      const { statement, statementTrue } = buildTrueFalseQuestion(card, distractorPool);
+      return {
+        clientView: { cardId: card._id, statement },
+        persisted: { cardId: card._id, statement, statementTrue }
+      };
+    }
+    case STUDY_MODES.WRITTEN_ANSWER:
+      return {
+        clientView: { cardId: card._id, prompt: card.front },
+        persisted: { cardId: card._id }
+      };
+    default:
+      // STUDY_MODES.FLIP — client gets full card; server persists only id.
+      return {
+        clientView: {
+          cardId: card._id,
+          front: card.front,
+          back: card.back,
+          frontImage: card.frontImage,
+          backImage: card.backImage
+        },
+        persisted: { cardId: card._id }
+      };
+  }
+}
+
+const ANSWER_GRADERS = {
+  [STUDY_MODES.MULTIPLE_CHOICE]({ question, payload }) {
+    if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+      throw new HttpError(400, 'Question state missing for this card');
+    }
+    const selected = String(payload.selectedOption || '');
+    if (!question.options.includes(selected)) {
+      throw new HttpError(400, 'Selected option was not offered for this question');
+    }
+    return selected === String(question.correctAnswer);
+  },
+  [STUDY_MODES.TRUE_FALSE]({ question, payload }) {
+    if (!question || typeof question.statementTrue !== 'boolean') {
+      throw new HttpError(400, 'Question state missing for this card');
+    }
+    if (typeof payload.isTrue !== 'boolean') {
+      throw new HttpError(400, 'isTrue must be a boolean for true_false mode');
+    }
+    return payload.isTrue === question.statementTrue;
+  },
+  [STUDY_MODES.WRITTEN_ANSWER]({ payload, card }) {
+    const normalize = (v) => String(v || '').trim().toLowerCase();
+    return normalize(payload.answer) === normalize(card.back);
+  }
+};
 
 export async function createSession(user, { deckId, mode, sideFirst, needsReviewOnly }) {
   const access = await getAccessibleDeckLean(user, deckId);
@@ -53,7 +122,7 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
   if (needsReviewOnly) {
     const progress = await CardProgress.find({
       user: user.userId,
-      status: 'needs_review'
+      status: CARD_STATUS.NEEDS_REVIEW
     }).select('card').lean();
     cardFilter._id = { $in: progress.map((p) => p.card) };
   }
@@ -70,33 +139,14 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
     : cards;
 
   const originalCardOrder = cards.map((card) => card._id);
-  const resolvedMode = mode || 'flip';
-  const resolvedSideFirst = sideFirst || 'front';
+  const resolvedMode = mode || STUDY_MODES.FLIP;
+  const resolvedSideFirst = sideFirst || CARD_SIDES.FRONT;
 
   const persistedQuestions = [];
   const questions = cards.map((card) => {
-    switch (resolvedMode) {
-      case 'multiple_choice':
-        const { prompt, options, correctAnswer } = buildMultipleChoiceQuestion(card, distractorPool);
-        persistedQuestions.push({ cardId: card._id, options, correctAnswer });
-        return { cardId: card._id, prompt, options };
-      case 'true_false':
-        const { statement, statementTrue } = buildTrueFalseQuestion(card, distractorPool);
-        persistedQuestions.push({ cardId: card._id, statement, statementTrue });
-        return { cardId: card._id, statement };
-      case 'written_answer':
-        persistedQuestions.push({ cardId: card._id });
-        return { cardId: card._id, prompt: card.front };
-      default:
-        persistedQuestions.push({ cardId: card._id });
-        return {
-          cardId: card._id,
-          front: card.front,
-          back: card.back,
-          frontImage: card.frontImage,
-          backImage: card.backImage
-        };
-    }
+    const { clientView, persisted } = buildQuestionForMode(resolvedMode, card, distractorPool);
+    persistedQuestions.push(persisted);
+    return clientView;
   });
 
   const session = await StudySession.create({
@@ -140,54 +190,26 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(404, 'Session not found');
   }
 
-  if (session.mode === 'flip') {
+  if (session.mode === STUDY_MODES.FLIP) {
     throw new HttpError(400, 'Flip mode does not accept submitted answers');
   }
 
-  const inSession = session.originalCardOrder.some((id) => String(id) === String(payload.cardId));
-
+  const inSession = session.originalCardOrder.some((id) => sameId(id, payload.cardId));
   if (!inSession) {
     throw new HttpError(400, 'Card is not part of this session');
   }
 
   const card = await Card.findById(payload.cardId);
-  if (!card || String(card.deck) !== String(session.deck)) {
+  if (!card || !sameId(card.deck, session.deck)) {
     throw new HttpError(404, 'Card not found in this session');
   }
 
-  const question = session.questions?.find((q) => String(q.cardId) === String(payload.cardId));
-
-  let isCorrect;
-  switch (session.mode) {
-    case 'multiple_choice':
-      if (!question || !Array.isArray(question.options) || question.options.length === 0) {
-        throw new HttpError(400, 'Question state missing for this card');
-      }
-
-      const selected = String(payload.selectedOption || '');
-      if (!question.options.includes(selected)) {
-        throw new HttpError(400, 'Selected option was not offered for this question');
-      }
-
-      isCorrect = selected === String(question.correctAnswer);
-      break;
-    case 'true_false':
-      if (!question || typeof question.statementTrue !== 'boolean') {
-        throw new HttpError(400, 'Question state missing for this card');
-      }
-
-      if (typeof payload.isTrue !== 'boolean') {
-        throw new HttpError(400, 'isTrue must be a boolean for true_false mode');
-      }
-
-      isCorrect = payload.isTrue === question.statementTrue;
-      break;
-    case 'written_answer':
-      isCorrect = String(payload.answer || '').trim().toLowerCase() === String(card.back).trim().toLowerCase();
-      break;
-    default:
-      throw new HttpError(400, 'Unsupported study mode');
+  const grader = ANSWER_GRADERS[session.mode];
+  if (!grader) {
+    throw new HttpError(400, 'Unsupported study mode');
   }
+  const question = session.questions?.find((q) => sameId(q.cardId, payload.cardId));
+  const isCorrect = grader({ question, payload, card });
 
   const claimed = await StudySession.findOneAndUpdate(
     { _id: sessionId, user: user.userId, answeredCardIds: { $ne: card._id } },
@@ -202,7 +224,7 @@ export async function submitAnswer(user, sessionId, payload) {
   const progress = await CardProgress.findOneAndUpdate(
     { user: user.userId, card: card._id },
     {
-      $setOnInsert: { status: 'still_learning' },
+      $setOnInsert: { status: CARD_STATUS.STILL_LEARNING },
       $inc: {
         correctCount: isCorrect ? 1 : 0,
         incorrectCount: isCorrect ? 0 : 1
@@ -234,7 +256,7 @@ export async function submitAnswer(user, sessionId, payload) {
 
 export async function setCardStatus(user, deckId, cardId, status) {
   const card = await Card.findById(cardId);
-  if (!card || String(card.deck) !== String(deckId)) {
+  if (!card || !sameId(card.deck, deckId)) {
     throw new HttpError(404, 'Card not found');
   }
   const access = await getAccessibleDeckLean(user, card.deck);

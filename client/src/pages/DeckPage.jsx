@@ -32,14 +32,23 @@ export default function DeckPage() {
     loadDeck();
   }, [loadDeck]);
 
-  async function uploadImage(file) {
+  const uploadImage = useCallback(async (file) => {
     try {
       return await api.uploadCardImage(file);
     } catch (err) {
       setError(err.message);
       return "";
     }
-  }
+  }, []);
+
+  // Returns an onChange handler that uploads the selected file and stores the
+  // resulting URL via the given setter. Removes the duplicated front/back
+  // handler bodies in the Add Card form.
+  const handleImageUpload = useCallback((setter) => async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setter(await uploadImage(file));
+  }, [uploadImage]);
 
   if (!deck) {
     return (
@@ -117,27 +126,11 @@ export default function DeckPage() {
             </label>
             <label>
               Front Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  if (e.target.files[0]) {
-                    setFrontImage(await uploadImage(e.target.files[0]));
-                  }
-                }}
-              />
+              <input type="file" accept="image/*" onChange={handleImageUpload(setFrontImage)} />
             </label>
             <label>
               Back Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  if (e.target.files[0]) {
-                    setBackImage(await uploadImage(e.target.files[0]));
-                  }
-                }}
-              />
+              <input type="file" accept="image/*" onChange={handleImageUpload(setBackImage)} />
             </label>
             <button type="submit">Add Card</button>
           </form>

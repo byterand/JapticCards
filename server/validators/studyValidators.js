@@ -1,9 +1,14 @@
 import { body } from 'express-validator';
+import {
+  STUDY_MODE_VALUES,
+  CARD_SIDE_VALUES,
+  CARD_STATUS_VALUES
+} from '../utils/constants.js';
 
 export const startSessionRules = [
   body('deckId').notEmpty(),
-  body('mode').optional().isIn(['multiple_choice', 'true_false', 'written_answer', 'flip']),
-  body('sideFirst').optional().isIn(['front', 'back']),
+  body('mode').optional().isIn(STUDY_MODE_VALUES),
+  body('sideFirst').optional().isIn(CARD_SIDE_VALUES),
   body('needsReviewOnly').optional().isBoolean()
 ];
 
@@ -19,5 +24,5 @@ export const answerRules = [
 ];
 
 export const cardStatusRules = [
-  body('status').isIn(['known', 'still_learning', 'needs_review'])
+  body('status').isIn(CARD_STATUS_VALUES)
 ];

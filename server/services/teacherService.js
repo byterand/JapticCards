@@ -2,16 +2,15 @@ import User from '../models/User.js';
 import Deck from '../models/Deck.js';
 import Assignment from '../models/Assignment.js';
 import { HttpError } from '../utils/HttpError.js';
+import { USER_ROLES } from '../utils/constants.js';
 
 export async function listStudents() {
-  return User.find({ role: 'student' }).select('_id username role').lean();
+  return User.find({ role: USER_ROLES.STUDENT }).select('_id username role').lean();
 }
 
 export async function listAssignments(teacherId, deckId) {
   const query = { teacher: teacherId };
-  if (deckId) {
-    query.deck = deckId;
-  }
+  if (deckId) query.deck = deckId;
   return Assignment.find(query)
     .populate('student', '_id username')
     .populate('deck', '_id title')
@@ -28,18 +27,21 @@ export async function assignDeck(teacherId, { deckId, studentIds }) {
   }
   const students = await User.find({
     _id: { $in: studentIds },
-    role: 'student'
+    role: USER_ROLES.STUDENT
   }).select('_id');
   if (students.length !== studentIds.length) {
     throw new HttpError(400, 'One or more student ids are invalid');
   }
-  const ops = students.map((student) => ({
-    updateOne: {
-      filter: { teacher: teacherId, student: student._id, deck: deck._id },
-      update: { $setOnInsert: { teacher: teacherId, student: student._id, deck: deck._id } },
-      upsert: true
-    }
-  }));
+  const ops = students.map((student) => {
+    const filter = { teacher: teacherId, student: student._id, deck: deck._id };
+    return {
+      updateOne: {
+        filter,
+        update: { $setOnInsert: filter },
+        upsert: true
+      }
+    };
+  });
   await Assignment.bulkWrite(ops);
 }
 

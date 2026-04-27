@@ -4,10 +4,9 @@ import { validate } from '../middleware/validate.js';
 import { registerRules, loginRules } from '../validators/authValidators.js';
 import * as authService from '../services/authService.js';
 import { config } from '../config/env.js';
+import { REFRESH_COOKIE_NAME } from '../utils/constants.js';
 
 const router = Router();
-
-const REFRESH_COOKIE = 'jc_refresh';
 
 function refreshCookieOptions() {
   return {
@@ -20,11 +19,15 @@ function refreshCookieOptions() {
 }
 
 function setRefreshCookie(res, token) {
-  res.cookie(REFRESH_COOKIE, token, refreshCookieOptions());
+  res.cookie(REFRESH_COOKIE_NAME, token, refreshCookieOptions());
 }
 
 function clearRefreshCookie(res) {
-  res.clearCookie(REFRESH_COOKIE, { ...refreshCookieOptions(), maxAge: 0 });
+  res.clearCookie(REFRESH_COOKIE_NAME, { ...refreshCookieOptions(), maxAge: 0 });
+}
+
+function readRefreshToken(req) {
+  return req.cookies?.[REFRESH_COOKIE_NAME] || req.body?.refreshToken;
 }
 
 router.post('/register', registerRules, validate, async (req, res) => {
@@ -43,9 +46,7 @@ router.post('/login', loginRules, validate, async (req, res) => {
 });
 
 router.post('/refresh', async (req, res) => {
-  const fromCookie = req.cookies?.[REFRESH_COOKIE];
-  const fromBody = req.body?.refreshToken;
-  const { token, refreshToken, user } = await authService.rotateRefreshToken(fromCookie || fromBody);
+  const { token, refreshToken, user } = await authService.rotateRefreshToken(readRefreshToken(req));
   setRefreshCookie(res, refreshToken);
   return res.json({ token, user });
 });
@@ -55,7 +56,7 @@ router.post('/logout', optionalVerifyToken, async (req, res) => {
   await authService.revokeSession({
     accessJti: req.tokenJti,
     accessExp: req.tokenExp,
-    refreshToken: req.cookies?.[REFRESH_COOKIE] || req.body?.refreshToken
+    refreshToken: readRefreshToken(req)
   });
   clearRefreshCookie(res);
   return res.json({ message: 'Logged out' });

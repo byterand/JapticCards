@@ -2,7 +2,84 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
-import { CARD_SIDES, CARD_STATUS, STUDY_MODES } from "../constants";
+import {
+  CARD_SIDES,
+  CARD_SIDE_LABELS,
+  CARD_STATUS,
+  CARD_STATUS_LABELS,
+  STUDY_MODES,
+  STUDY_MODE_LABELS
+} from "../constants";
+
+const STATUS_BUTTONS = [
+  CARD_STATUS.KNOWN,
+  CARD_STATUS.STILL_LEARNING,
+  CARD_STATUS.NEEDS_REVIEW
+];
+
+function FlipCard({ current, sideFirst, flipped, onFlip }) {
+  const showFront = sideFirst === CARD_SIDES.FRONT ? !flipped : flipped;
+  return (
+    <button type="button" className="flashcard" onClick={onFlip}>
+      {showFront ? current.front : current.back}
+    </button>
+  );
+}
+
+function MultipleChoice({ current, onAnswer }) {
+  return (
+    <div>
+      <p>{current.prompt}</p>
+      {current.options.map((opt, idx) => (
+        <button
+          key={`${current.cardId}-${idx}`}
+          type="button"
+          onClick={() => onAnswer({ selectedOption: opt })}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TrueFalse({ current, onAnswer }) {
+  return (
+    <div>
+      <p>{current.statement}</p>
+      <button
+        type="button"
+        onClick={() => onAnswer({ answer: current.statement, isTrue: true })}
+      >
+        True
+      </button>
+      <button
+        type="button"
+        onClick={() => onAnswer({ answer: current.statement, isTrue: false })}
+      >
+        False
+      </button>
+    </div>
+  );
+}
+
+function WrittenAnswer({ current, typedAnswer, setTypedAnswer, onAnswer }) {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onAnswer({ answer: typedAnswer });
+      }}
+    >
+      <p>{current.prompt}</p>
+      <input
+        value={typedAnswer}
+        onChange={(e) => setTypedAnswer(e.target.value)}
+      />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
 
 export default function StudyPage() {
   const { id } = useParams();
@@ -103,6 +180,36 @@ export default function StudyPage() {
     }
   }, [session]);
 
+  const renderQuestion = () => {
+    if (!current) return null;
+    switch (mode) {
+      case STUDY_MODES.FLIP:
+        return (
+          <FlipCard
+            current={current}
+            sideFirst={sideFirst}
+            flipped={flipped}
+            onFlip={() => setFlipped((f) => !f)}
+          />
+        );
+      case STUDY_MODES.MULTIPLE_CHOICE:
+        return <MultipleChoice current={current} onAnswer={submitAnswer} />;
+      case STUDY_MODES.TRUE_FALSE:
+        return <TrueFalse current={current} onAnswer={submitAnswer} />;
+      case STUDY_MODES.WRITTEN_ANSWER:
+        return (
+          <WrittenAnswer
+            current={current}
+            typedAnswer={typedAnswer}
+            setTypedAnswer={setTypedAnswer}
+            onAnswer={submitAnswer}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Layout>
       {error && <p className="error">{error}</p>}
@@ -111,17 +218,17 @@ export default function StudyPage() {
         <label>
           Mode
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value={STUDY_MODES.FLIP}>Flip</option>
-            <option value={STUDY_MODES.MULTIPLE_CHOICE}>Multiple Choice</option>
-            <option value={STUDY_MODES.TRUE_FALSE}>True/False</option>
-            <option value={STUDY_MODES.WRITTEN_ANSWER}>Written Answer</option>
+            {Object.values(STUDY_MODES).map((m) => (
+              <option key={m} value={m}>{STUDY_MODE_LABELS[m]}</option>
+            ))}
           </select>
         </label>
         <label>
           First side
           <select value={sideFirst} onChange={(e) => setSideFirst(e.target.value)}>
-            <option value={CARD_SIDES.FRONT}>Front</option>
-            <option value={CARD_SIDES.BACK}>Back</option>
+            {Object.values(CARD_SIDES).map((s) => (
+              <option key={s} value={s}>{CARD_SIDE_LABELS[s]}</option>
+            ))}
           </select>
         </label>
         <label>
@@ -140,63 +247,7 @@ export default function StudyPage() {
       {session && current && (
         <section className="card">
           <p>Card {index + 1} of {session.questions.length}</p>
-          {mode === STUDY_MODES.FLIP && (
-            <button
-              type="button"
-              className="flashcard"
-              onClick={() => setFlipped((f) => !f)}
-            >
-              {sideFirst === CARD_SIDES.FRONT
-                ? (flipped ? current.back : current.front)
-                : (flipped ? current.front : current.back)}
-            </button>
-          )}
-          {mode === STUDY_MODES.MULTIPLE_CHOICE && (
-            <div>
-              <p>{current.prompt}</p>
-              {current.options.map((opt, idx) => (
-                <button
-                  key={`${current.cardId}-${idx}`}
-                  type="button"
-                  onClick={() => submitAnswer({ selectedOption: opt })}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          )}
-          {mode === STUDY_MODES.TRUE_FALSE && (
-            <div>
-              <p>{current.statement}</p>
-              <button
-                type="button"
-                onClick={() => submitAnswer({ answer: current.statement, isTrue: true })}
-              >
-                True
-              </button>
-              <button
-                type="button"
-                onClick={() => submitAnswer({ answer: current.statement, isTrue: false })}
-              >
-                False
-              </button>
-            </div>
-          )}
-          {mode === STUDY_MODES.WRITTEN_ANSWER && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitAnswer({ answer: typedAnswer });
-              }}
-            >
-              <p>{current.prompt}</p>
-              <input
-                value={typedAnswer}
-                onChange={(e) => setTypedAnswer(e.target.value)}
-              />
-              <button type="submit">Submit</button>
-            </form>
-          )}
+          {renderQuestion()}
 
           <p>{result}</p>
           <div className="actions">
@@ -219,24 +270,15 @@ export default function StudyPage() {
             </button>
           </div>
           <div className="actions">
-            <button
-              type="button"
-              onClick={() => updateCardStatus(CARD_STATUS.KNOWN)}
-            >
-              Known
-            </button>
-            <button
-              type="button"
-              onClick={() => updateCardStatus(CARD_STATUS.STILL_LEARNING)}
-            >
-              Still Learning
-            </button>
-            <button
-              type="button"
-              onClick={() => updateCardStatus(CARD_STATUS.NEEDS_REVIEW)}
-            >
-              Needs Review
-            </button>
+            {STATUS_BUTTONS.map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => updateCardStatus(status)}
+              >
+                {CARD_STATUS_LABELS[status]}
+              </button>
+            ))}
           </div>
         </section>
       )}

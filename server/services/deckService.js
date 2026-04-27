@@ -8,6 +8,41 @@ import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
 import { runInTransaction } from '../utils/transaction.js';
 import { deleteManagedImagesForCard, inlineManagedImage, persistInlineImage } from '../utils/cardImages.js';
+import {
+  ACCESS_LEVELS,
+  CONTENT_TYPES,
+  EXPORT_FORMATS,
+  EXPORT_FORMAT_VALUES
+} from '../utils/constants.js';
+
+const TAG_SEPARATOR = '|';
+const CSV_COLUMNS = [
+  'deckTitle',
+  'deckDescription',
+  'deckCategory',
+  'deckTags',
+  'front',
+  'back',
+  'frontImage',
+  'backImage'
+];
+
+const DECK_UPDATABLE_FIELDS = ['title', 'description', 'category', 'tags'];
+
+function applyDefinedFields(target, updates, fields) {
+  fields.forEach((field) => {
+    if (updates[field] !== undefined) {
+      target[field] = updates[field];
+    }
+  });
+}
+
+function deckResponseFlags(isOwner) {
+  return {
+    readOnly: !isOwner,
+    access: isOwner ? ACCESS_LEVELS.OWNER : ACCESS_LEVELS.ASSIGNED
+  };
+}
 
 export async function listUserDecks(userId) {
   const assignments = await Assignment.find({ student: userId }).select('deck');
@@ -17,10 +52,10 @@ export async function listUserDecks(userId) {
     $or: [{ owner: userId }, { _id: { $in: assignedDeckIds } }]
   }).lean();
 
-  return decks.map((deck) => {
-    const isOwner = String(deck.owner) === String(userId);
-    return { ...deck, readOnly: !isOwner, access: isOwner ? 'owner' : 'assigned' };
-  });
+  return decks.map((deck) => ({
+    ...deck,
+    ...deckResponseFlags(String(deck.owner) === String(userId))
+  }));
 }
 
 export async function createDeck(userId, payload) {
@@ -49,8 +84,7 @@ export async function getDeckWithCards(user, deckId) {
     createdAt,
     updatedAt,
     cards,
-    readOnly: access.readOnly,
-    access: access.readOnly ? 'assigned' : 'owner'
+    ...deckResponseFlags(!access.readOnly)
   };
 }
 
@@ -62,12 +96,7 @@ export async function updateDeck(user, deckId, updates) {
   if (access.readOnly) {
     throw new HttpError(403, 'Assigned decks are read-only for students');
   }
-  const fields = ['title', 'description', 'category', 'tags'];
-  fields.forEach((field) => {
-    if (updates[field] !== undefined) {
-      access.deck[field] = updates[field];
-    }
-  });
+  applyDefinedFields(access.deck, updates, DECK_UPDATABLE_FIELDS);
   await access.deck.save();
   return access.deck;
 }
@@ -94,7 +123,37 @@ export async function deleteDeck(user, deckId) {
   await Promise.allSettled(cards.map(deleteManagedImagesForCard));
 }
 
+const EXPORT_SERIALIZERS = {
+  [EXPORT_FORMATS.JSON](payload) {
+    return {
+      contentType: CONTENT_TYPES.JSON,
+      body: JSON.stringify(payload, null, 2)
+    };
+  },
+  [EXPORT_FORMATS.CSV](payload) {
+    const rows = payload.cards.map((card) => ({
+      deckTitle: payload.title,
+      deckDescription: payload.description,
+      deckCategory: payload.category,
+      deckTags: Array.isArray(payload.tags) ? payload.tags.join(TAG_SEPARATOR) : '',
+      front: card.front,
+      back: card.back,
+      frontImage: card.frontImage,
+      backImage: card.backImage
+    }));
+    return {
+      contentType: CONTENT_TYPES.CSV,
+      body: serializeCsv(CSV_COLUMNS, rows)
+    };
+  }
+};
+
 export async function exportDeck(user, deckId, format) {
+  const serialize = EXPORT_SERIALIZERS[format];
+  if (!serialize) {
+    throw new HttpError(400, 'Unsupported export format. Use json or csv.');
+  }
+
   const access = await getAccessibleDeckLean(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
@@ -113,65 +172,52 @@ export async function exportDeck(user, deckId, format) {
     tags: access.deck.tags,
     cards: exportedCards
   };
-
-  if (format === 'json') {
-    return { contentType: 'application/json', body: JSON.stringify(payload, null, 2) };
-  }
-  if (format === 'csv') {
-    const columns = ['deckTitle', 'deckDescription', 'deckCategory', 'deckTags', 'front', 'back', 'frontImage', 'backImage'];
-    const rows = payload.cards.map((card) => ({
-      deckTitle: payload.title,
-      deckDescription: payload.description,
-      deckCategory: payload.category,
-      deckTags: Array.isArray(payload.tags) ? payload.tags.join('|') : '',
-      front: card.front,
-      back: card.back,
-      frontImage: card.frontImage,
-      backImage: card.backImage,
-    }));
-    return { contentType: 'text/csv', body: serializeCsv(columns, rows) };
-  }
-  throw new HttpError(400, 'Unsupported export format. Use json or csv.');
+  return serialize(payload);
 }
+
+// Per-format parsers for import. Each takes the raw content string and returns
+// the normalized deck-shaped object { title, description, category, tags, cards[] }.
+const IMPORT_PARSERS = {
+  [EXPORT_FORMATS.JSON](content) {
+    return JSON.parse(content);
+  },
+  [EXPORT_FORMATS.CSV](content) {
+    const rows = parseCsv(content);
+    if (!rows.length) {
+      throw new HttpError(400, 'CSV must include at least one card row');
+    }
+    const tags = (rows[0].deckTags || '')
+      .split(TAG_SEPARATOR)
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    return {
+      title: rows[0].deckTitle || 'Imported Deck',
+      description: rows[0].deckDescription || '',
+      category: rows[0].deckCategory || '',
+      tags,
+      cards: rows.map((row) => ({
+        front: row.front,
+        back: row.back,
+        frontImage: row.frontImage || '',
+        backImage: row.backImage || ''
+      }))
+    };
+  }
+};
 
 export async function importDeck(userId, { format, content }) {
   if (!format || !content) {
     throw new HttpError(400, 'format and content are required');
   }
+  if (!EXPORT_FORMAT_VALUES.includes(format)) {
+    throw new HttpError(400, 'Unsupported import format. Use json or csv.');
+  }
 
   let data;
   try {
-    if (format === 'json') {
-      data = JSON.parse(content);
-    } else if (format === 'csv') {
-      const rows = parseCsv(content);
-      if (!rows.length) {
-        throw new HttpError(400, 'CSV must include at least one card row');
-      }
-      const rawTags = rows[0].deckTags || '';
-      const tags = rawTags
-        .split('|')
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      data = {
-        title: rows[0].deckTitle || 'Imported Deck',
-        description: rows[0].deckDescription || '',
-        category: rows[0].deckCategory || '',
-        tags,
-        cards: rows.map((row) => ({
-          front: row.front,
-          back: row.back,
-          frontImage: row.frontImage || '',
-          backImage: row.backImage || ''
-        }))
-      };
-    } else {
-      throw new HttpError(400, 'Unsupported import format. Use json or csv.');
-    }
+    data = IMPORT_PARSERS[format](content);
   } catch (err) {
-    if (err instanceof HttpError) {
-      throw err;
-    }
+    if (err instanceof HttpError) throw err;
     throw new HttpError(400, 'Invalid file content. Could not parse.');
   }
 

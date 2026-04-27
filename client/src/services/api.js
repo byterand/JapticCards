@@ -1,15 +1,22 @@
+import { CONTENT_TYPES } from "../constants";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const ABSOLUTE_PREFIXES = ["data:", "http://", "https://"];
+
+function isAbsoluteUrl(value) {
+  return ABSOLUTE_PREFIXES.some((p) => value.startsWith(p));
+}
 
 export function imageUrl(value) {
   if (!value) return "";
-  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://")) {
-    return value;
-  }
+  if (isAbsoluteUrl(value)) return value;
   if (value.startsWith("/")) return `${BASE_URL}${value}`;
   return value;
 }
 
-// Access token lives in memory only. Refresh token is delivered via an httpOnly cookie and travels with credentials: "include".
+// Access token lives in memory only. Refresh token is delivered via an
+// httpOnly cookie and travels with credentials: "include".
 let accessToken = null;
 let refreshPromise = null;
 
@@ -21,13 +28,21 @@ export function getAccessToken() {
   return accessToken;
 }
 
+function jsonHeaders() {
+  return { "Content-Type": CONTENT_TYPES.JSON };
+}
+
+function isJsonResponse(res) {
+  return res.headers.get("content-type")?.includes(CONTENT_TYPES.JSON) ?? false;
+}
+
 async function refreshAccessToken() {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" }
+      headers: jsonHeaders()
     });
     if (!res.ok) {
       accessToken = null;
@@ -48,7 +63,7 @@ async function doFetch(path, options, { retry = true } = {}) {
   // For FormData bodies let the browser set Content-Type (needs the boundary).
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = {
-    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+    ...(isFormData ? {} : jsonHeaders()),
     ...(options.headers || {})
   };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -72,16 +87,24 @@ async function doFetch(path, options, { retry = true } = {}) {
   return res;
 }
 
+function extractErrorMessage(data, fallback = "Request failed") {
+  const validationMessage = Array.isArray(data?.errors) ? data.errors[0]?.msg : "";
+  return validationMessage || data?.message || data?.error || fallback;
+}
+
 async function request(path, options = {}) {
   const res = await doFetch(path, options);
-  const isJson = res.headers.get("content-type")?.includes("application/json");
-  const data = isJson ? await res.json() : await res.text();
+  const data = isJsonResponse(res) ? await res.json() : await res.text();
   if (!res.ok) {
-    const validationMessage = Array.isArray(data?.errors) ? data.errors[0]?.msg : "";
-    const message = validationMessage || data?.message || data?.error || "Request failed";
-    throw new Error(message);
+    throw new Error(extractErrorMessage(data));
   }
   return data;
+}
+
+function jsonRequest(path, method, payload) {
+  const options = { method };
+  if (payload !== undefined) options.body = JSON.stringify(payload);
+  return request(path, options);
 }
 
 export const api = {
@@ -93,61 +116,68 @@ export const api = {
       return null;
     }
   },
-  async register(payload) {
-    return request("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+  register(payload) {
+    return jsonRequest("/auth/register", "POST", payload);
   },
   async login(payload) {
-    const data = await request("/auth/login", { method: "POST", body: JSON.stringify(payload) });
+    const data = await jsonRequest("/auth/login", "POST", payload);
     accessToken = data.token;
     return data;
   },
   async logout() {
     try {
-      return await request("/auth/logout", { method: "POST" });
+      return await jsonRequest("/auth/logout", "POST");
     } finally {
       accessToken = null;
     }
   },
   me() { return request("/auth/me"); },
   getDecks() { return request("/decks"); },
-  createDeck(payload) { return request("/decks", { method: "POST", body: JSON.stringify(payload) }); },
+  createDeck(payload) { return jsonRequest("/decks", "POST", payload); },
   getDeck(id) { return request(`/decks/${id}`); },
-  updateDeck(id, payload) { return request(`/decks/${id}`, { method: "PATCH", body: JSON.stringify(payload) }); },
-  deleteDeck(id) { return request(`/decks/${id}`, { method: "DELETE" }); },
-  addCard(deckId, payload) { return request(`/decks/${deckId}/cards`, { method: "POST", body: JSON.stringify(payload) }); },
-  updateCard(deckId, cardId, payload) { return request(`/decks/${deckId}/cards/${cardId}`, { method: "PATCH", body: JSON.stringify(payload) }); },
-  deleteCard(deckId, cardId) { return request(`/decks/${deckId}/cards/${cardId}`, { method: "DELETE" }); },
+  updateDeck(id, payload) { return jsonRequest(`/decks/${id}`, "PATCH", payload); },
+  deleteDeck(id) { return jsonRequest(`/decks/${id}`, "DELETE"); },
+  addCard(deckId, payload) { return jsonRequest(`/decks/${deckId}/cards`, "POST", payload); },
+  updateCard(deckId, cardId, payload) {
+    return jsonRequest(`/decks/${deckId}/cards/${cardId}`, "PATCH", payload);
+  },
+  deleteCard(deckId, cardId) {
+    return jsonRequest(`/decks/${deckId}/cards/${cardId}`, "DELETE");
+  },
   async uploadCardImage(file) {
     const form = new FormData();
     form.append("image", file);
     const res = await doFetch("/cards/image", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.message || "Upload failed");
+    if (!res.ok) throw new Error(extractErrorMessage(data, "Upload failed"));
     return data.url;
   },
-  createSession(payload) { return request("/study/sessions", { method: "POST", body: JSON.stringify(payload) }); },
-  answerSession(sessionId, payload) { return request(`/study/sessions/${sessionId}/answer`, { method: "POST", body: JSON.stringify(payload) }); },
-  toggleShuffle(sessionId, enabled) { return request(`/study/sessions/${sessionId}/shuffle`, { method: "PATCH", body: JSON.stringify({ enabled }) }); },
-  setCardStatus(deckId, cardId, status) { return request(`/decks/${deckId}/cards/${cardId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }); },
+  createSession(payload) { return jsonRequest("/study/sessions", "POST", payload); },
+  answerSession(sessionId, payload) {
+    return jsonRequest(`/study/sessions/${sessionId}/answer`, "POST", payload);
+  },
+  toggleShuffle(sessionId, enabled) {
+    return jsonRequest(`/study/sessions/${sessionId}/shuffle`, "PATCH", { enabled });
+  },
+  setCardStatus(deckId, cardId, status) {
+    return jsonRequest(`/decks/${deckId}/cards/${cardId}/status`, "PATCH", { status });
+  },
   getStats(deckId) { return request(`/decks/${deckId}/stats`); },
   getStudents() { return request("/teacher/students"); },
   getAssignments(deckId) {
     const suffix = deckId ? `?deckId=${deckId}` : "";
     return request(`/teacher/assignments${suffix}`);
   },
-  assignDeck(payload) { return request("/teacher/assignments", { method: "POST", body: JSON.stringify(payload) }); },
-  revokeAssignment(id) { return request(`/teacher/assignments/${id}`, { method: "DELETE" }); },
+  assignDeck(payload) { return jsonRequest("/teacher/assignments", "POST", payload); },
+  revokeAssignment(id) { return jsonRequest(`/teacher/assignments/${id}`, "DELETE"); },
   async exportDeck(id, format) {
     const res = await doFetch(`/decks/${id}/export?format=${format}`, { method: "GET" });
     if (!res.ok) {
-      // Without this check, a JSON error body (e.g. 401/404) would be written
-      // into the downloaded .csv/.json file.
+      // Without this check, a JSON error body (e.g. 401/404) would be written into the downloaded .csv/.json file.
       let message = "Export failed";
-      const isJson = res.headers.get("content-type")?.includes("application/json");
-      if (isJson) {
+      if (isJsonResponse(res)) {
         try {
-          const data = await res.json();
-          message = data?.message || data?.error || message;
+          message = extractErrorMessage(await res.json(), message);
         } catch {
           // keep default message
         }
@@ -156,5 +186,5 @@ export const api = {
     }
     return res.text();
   },
-  importDeck(payload) { return request("/decks/import", { method: "POST", body: JSON.stringify(payload) }); }
+  importDeck(payload) { return jsonRequest("/decks/import", "POST", payload); }
 };

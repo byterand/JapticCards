@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 import ImportDeckForm from "../components/ImportDeckForm";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
-import { EXPORT_FORMATS, buildPath } from "../constants";
+import { CONTENT_TYPE_BY_FORMAT, CONTENT_TYPES, EXPORT_FORMATS, buildPath } from "../constants";
 
 export default function DashboardPage() {
   const [decks, setDecks] = useState([]);
@@ -36,7 +36,7 @@ export default function DashboardPage() {
     const format = (exportFormats[deck._id] || EXPORT_FORMATS.JSON).toLowerCase();
     try {
       const content = await api.exportDeck(deck._id, format);
-      const blobType = format === EXPORT_FORMATS.CSV ? "text/csv" : "application/json";
+      const blobType = CONTENT_TYPE_BY_FORMAT[format] || CONTENT_TYPES.JSON;
       const blob = new Blob([content], { type: blobType });
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");

@@ -2,6 +2,7 @@ import Card from '../models/Card.js';
 import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
+import { CARD_STATUS } from '../utils/constants.js';
 
 export async function getDeckStats(user, deckId) {
   const access = await getAccessibleDeckLean(user, deckId);
@@ -31,7 +32,7 @@ export async function getDeckStats(user, deckId) {
       front: card.front,
       correctCount: cardCorrect,
       incorrectCount: cardIncorrect,
-      status: p?.status || 'still_learning'
+      status: p?.status || CARD_STATUS.STILL_LEARNING
     };
   });
 

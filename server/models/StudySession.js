@@ -1,4 +1,10 @@
 import mongoose from 'mongoose';
+import {
+  STUDY_MODES,
+  STUDY_MODE_VALUES,
+  CARD_SIDES,
+  CARD_SIDE_VALUES
+} from '../utils/constants.js';
 
 const sessionQuestionSchema = new mongoose.Schema({
   cardId: {
@@ -41,13 +47,13 @@ const studySessionSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['multiple_choice', 'true_false', 'written_answer', 'flip'],
-    default: 'flip'
+    enum: STUDY_MODE_VALUES,
+    default: STUDY_MODES.FLIP
   },
   sideFirst: {
     type: String,
-    enum: ['front', 'back'],
-    default: 'front'
+    enum: CARD_SIDE_VALUES,
+    default: CARD_SIDES.FRONT
   },
   originalCardOrder: [{
     type: mongoose.Schema.Types.ObjectId,

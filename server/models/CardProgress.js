@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { CARD_STATUS, CARD_STATUS_VALUES } from '../utils/constants.js';
 
 const cardProgressSchema = new mongoose.Schema({
   user: {
@@ -15,8 +16,8 @@ const cardProgressSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['known', 'still_learning', 'needs_review'],
-    default: 'still_learning'
+    enum: CARD_STATUS_VALUES,
+    default: CARD_STATUS.STILL_LEARNING
   },
   correctCount: {
     type: Number,

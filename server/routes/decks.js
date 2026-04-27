@@ -8,6 +8,7 @@ import * as deckService from '../services/deckService.js';
 import * as cardService from '../services/cardService.js';
 import * as studyService from '../services/studyService.js';
 import * as statsService from '../services/statsService.js';
+import { EXPORT_FORMATS } from '../utils/constants.js';
 
 const router = Router();
 
@@ -43,7 +44,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 });
 
 router.get('/:id/export', verifyToken, async (req, res) => {
-  const format = (req.query.format || 'json').toLowerCase();
+  const format = (req.query.format || EXPORT_FORMATS.JSON).toLowerCase();
   const { contentType, body } = await deckService.exportDeck(req.user, req.params.id, format);
   res.setHeader('Content-Type', contentType);
   return res.send(body);
