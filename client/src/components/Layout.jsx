@@ -9,24 +9,34 @@ export default function Layout({ children }) {
   return (
     <div>
       <header className="header">
-        <h1>Japtic Cards</h1>
-        {user && (
-          <nav>
-            <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
-            {user.role === USER_ROLES.TEACHER && (
-              <Link to={ROUTES.TEACHER}>Teacher</Link>
-            )}
-            <button
-              type="button"
-              onClick={async () => {
-                await logout();
-                navigate(ROUTES.LOGIN);
-              }}
-            >
-              Logout
-            </button>
-          </nav>
-        )}
+        <h1>
+          <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
+        </h1>
+        <nav>
+          <Link to={ROUTES.LANDING}>Home</Link>
+          {user ? (
+            <>
+              <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
+              {user.role === USER_ROLES.TEACHER && (
+                <Link to={ROUTES.TEACHER}>Teacher</Link>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  navigate(ROUTES.LANDING);
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to={ROUTES.LOGIN}>Login</Link>
+              <Link to={ROUTES.REGISTER}>Register</Link>
+            </>
+          )}
+        </nav>
       </header>
       <main className="page">{children}</main>
     </div>

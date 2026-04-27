@@ -63,9 +63,10 @@ export const CONTENT_TYPE_BY_FORMAT = {
 };
 
 export const ROUTES = {
+  LANDING: "/",
   LOGIN: "/login",
   REGISTER: "/register",
-  DASHBOARD: "/",
+  DASHBOARD: "/dashboard",
   TEACHER: "/teacher",
   DECK: "/decks/:id",
   STUDY: "/study/:id"

@@ -18,7 +18,18 @@ describe("App auth routing", () => {
     vi.restoreAllMocks();
   });
 
+  test("renders the landing page at the root url for unauthenticated visitors", async () => {
+    window.history.pushState({}, "", "/");
+    render(<App />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "A flashcard platform for classes and self-study" })
+      ).toBeInTheDocument();
+    });
+  });
+
   test("redirects protected dashboard to login when unauthenticated", async () => {
+    window.history.pushState({}, "", "/dashboard");
     render(<App />);
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
@@ -26,9 +37,11 @@ describe("App auth routing", () => {
   });
 
   test("allows switching from login to register form", async () => {
+    window.history.pushState({}, "", "/login");
     render(<App />);
     await screen.findByRole("heading", { name: "Login" });
-    await userEvent.click(screen.getByText("Register"));
+    const registerLinks = await screen.findAllByRole("link", { name: "Register" });
+    await userEvent.click(registerLinks[0]);
     expect(await screen.findByRole("button", { name: "Create Account" })).toBeInTheDocument();
   });
 });

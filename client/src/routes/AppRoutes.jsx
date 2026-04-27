@@ -4,12 +4,14 @@ import { ROUTES, USER_ROLES } from "../constants";
 import AuthForm from "../pages/AuthForm";
 import DashboardPage from "../pages/DashboardPage";
 import DeckPage from "../pages/DeckPage";
+import LandingPage from "../pages/LandingPage";
 import StudyPage from "../pages/StudyPage";
 import TeacherPage from "../pages/TeacherPage";
 
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path={ROUTES.LANDING} element={<LandingPage />} />
       <Route path={ROUTES.LOGIN} element={<AuthForm />} />
       <Route path={ROUTES.REGISTER} element={<AuthForm registerMode />} />
       <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -23,7 +25,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+      <Route path="*" element={<Navigate to={ROUTES.LANDING} replace />} />
     </Routes>
   );
 }
