@@ -5,6 +5,8 @@ import { getAccessibleDeckLean } from './accessService.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { HttpError } from '../utils/HttpError.js';
 
+// Returns the prompt + options the client sees AND the correctAnswer that
+// stays server-side (persisted on the session, never returned to the client).
 function buildMultipleChoiceQuestion(card, cards) {
   const distractors = cards
     .filter((c) => String(c._id) !== String(card._id))
@@ -15,7 +17,7 @@ function buildMultipleChoiceQuestion(card, cards) {
     uniqueDistractors.push(`${card.back} (alt ${uniqueDistractors.length + 1})`);
   }
   const options = shuffleArray([card.back, ...uniqueDistractors]).slice(0, 4);
-  return { prompt: card.front, options };
+  return { prompt: card.front, options, correctAnswer: card.back };
 }
 
 // Returns { statement, statementTrue } for INTERNAL use only.
@@ -70,27 +72,25 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
   const resolvedMode = mode || 'flip';
   const resolvedSideFirst = sideFirst || 'front';
 
-  const session = await StudySession.create({
-    user: user.userId,
-    deck: deckId,
-    mode: resolvedMode,
-    sideFirst: resolvedSideFirst,
-    originalCardOrder,
-    currentCardOrder: originalCardOrder,
-    shuffleEnabled: false
-  });
-
+  // Build the response payload (what the client sees) and, in parallel, the
+  // persisted question state (server-only ground truth used by submitAnswer).
+  const persistedQuestions = [];
   const questions = cards.map((card) => {
     if (resolvedMode === 'multiple_choice') {
-      return { cardId: card._id, ...buildMultipleChoiceQuestion(card, cards) };
+      const { prompt, options, correctAnswer } = buildMultipleChoiceQuestion(card, cards);
+      persistedQuestions.push({ cardId: card._id, options, correctAnswer });
+      return { cardId: card._id, prompt, options };
     }
     if (resolvedMode === 'true_false') {
-      const { statement } = buildTrueFalseQuestion(card, cards);
+      const { statement, statementTrue } = buildTrueFalseQuestion(card, cards);
+      persistedQuestions.push({ cardId: card._id, statement, statementTrue });
       return { cardId: card._id, statement };
     }
     if (resolvedMode === 'written_answer') {
+      persistedQuestions.push({ cardId: card._id });
       return { cardId: card._id, prompt: card.front };
     }
+    persistedQuestions.push({ cardId: card._id });
     return {
       cardId: card._id,
       front: card.front,
@@ -98,6 +98,17 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
       frontImage: card.frontImage,
       backImage: card.backImage
     };
+  });
+
+  const session = await StudySession.create({
+    user: user.userId,
+    deck: deckId,
+    mode: resolvedMode,
+    sideFirst: resolvedSideFirst,
+    originalCardOrder,
+    currentCardOrder: originalCardOrder,
+    questions: persistedQuestions,
+    shuffleEnabled: false
   });
 
   return {
@@ -144,14 +155,28 @@ export async function submitAnswer(user, sessionId, payload) {
     throw new HttpError(404, 'Card not found in this session');
   }
 
+  // Look up the question state the server actually issued for this card.
+  // This is the source of truth for grading MC and T/F -- never trust the
+  // client's `answer`/`selectedOption` for correctness on its own.
+  const question = session.questions?.find(
+    (q) => String(q.cardId) === String(payload.cardId)
+  );
+
   let isCorrect;
   if (session.mode === 'multiple_choice') {
-    isCorrect = String(payload.selectedOption || '') === String(card.back);
+    if (!question || !Array.isArray(question.options) || question.options.length === 0) {
+      throw new HttpError(400, 'Question state missing for this card');
+    }
+    const selected = String(payload.selectedOption || '');
+    if (!question.options.includes(selected)) {
+      throw new HttpError(400, 'Selected option was not offered for this question');
+    }
+    isCorrect = selected === String(question.correctAnswer);
   } else if (session.mode === 'true_false') {
-    const presentedStatement = String(payload.answer || '');
-    const trueStatement = `${card.front} -> ${card.back}`;
-    const statementMatchesTrue = presentedStatement === trueStatement;
-    isCorrect = Boolean(payload.isTrue) === statementMatchesTrue;
+    if (!question || typeof question.statementTrue !== 'boolean') {
+      throw new HttpError(400, 'Question state missing for this card');
+    }
+    isCorrect = Boolean(payload.isTrue) === Boolean(question.statementTrue);
   } else if (session.mode === 'written_answer') {
     isCorrect = String(payload.answer || '').trim().toLowerCase()
       === String(card.back).trim().toLowerCase();

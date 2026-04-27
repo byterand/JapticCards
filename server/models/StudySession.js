@@ -1,5 +1,31 @@
 import mongoose from 'mongoose';
 
+const sessionQuestionSchema = new mongoose.Schema({
+  cardId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Card',
+    required: true
+  },
+  // multiple_choice
+  options: {
+    type: [String],
+    default: undefined
+  },
+  correctAnswer: {
+    type: String,
+    default: undefined
+  },
+  // true_false
+  statement: {
+    type: String,
+    default: undefined
+  },
+  statementTrue: {
+    type: Boolean,
+    default: undefined
+  }
+}, { _id: false });
+
 const studySessionSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +57,10 @@ const studySessionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Card'
   }],
+  questions: {
+    type: [sessionQuestionSchema],
+    default: []
+  },
   shuffleEnabled: {
     type: Boolean,
     default: false

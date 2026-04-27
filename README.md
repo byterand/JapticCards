@@ -4,7 +4,7 @@ Japtic Cards is a full-stack flashcard platform with authentication, role-aware 
 
 ## Project Structure
 
-- `frontend/` React app (CRA) for user interface
+- `client/` React app (CRA) for user interface
 - `server/` Express + MongoDB API
 
 ## Installation
@@ -25,7 +25,7 @@ Japtic Cards is a full-stack flashcard platform with authentication, role-aware 
 ### Frontend
 
 1. Install frontend deps:
-   - `cd ../frontend`
+   - `cd client`
    - `npm install`
 2. Start frontend:
    - `npm start`
@@ -38,6 +38,6 @@ Frontend expects API at `http://localhost:5000` by default. Override with `REACT
   - `cd server`
   - `npm test`
 - Frontend:
-  - `cd frontend`
+  - `cd client`
   - `npm test -- --watchAll=false`
   - `npm run build`

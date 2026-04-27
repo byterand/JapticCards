@@ -40,8 +40,9 @@ export async function createCard(user, deckId, payload) {
 }
 
 export async function updateCard(user, deckId, cardId, updates) {
-  const card = await getCard(cardId, deckId);
+  // Authorize first
   await getDeck(user, deckId);
+  const card = await getCard(cardId, deckId);
 
   // Track images that will be orphaned by this update
   const orphanedImages = [];
@@ -59,8 +60,9 @@ export async function updateCard(user, deckId, cardId, updates) {
 }
 
 export async function deleteCard(user, deckId, cardId) {
-  const card = await getCard(cardId, deckId);
+  // Authorize first
   await getDeck(user, deckId);
+  const card = await getCard(cardId, deckId);
   await CardProgress.deleteMany({ card: card._id });
   await Card.deleteOne({ _id: card._id });
   // Best-effort image cleanup after the DB delete succeeds.

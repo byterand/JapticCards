@@ -13,7 +13,7 @@ const routes = (app) => {
   app.use('/study', studyRoutes);
   app.use('/teacher', teacherRoutes);
   app.use('/cards', uploadRoutes);
-  app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+  app.use((req, res) => res.status(404).json({ message: 'Not found' }));
 };
 
 export default routes;
