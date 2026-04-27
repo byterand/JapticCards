@@ -54,8 +54,7 @@ export async function updateCard(user, deckId, cardId, updates) {
     card[field] = updates[field];
   });
   await card.save();
-  // Fire-and-forget cleanup; failures don't affect the response.
-  Promise.all(orphanedImages.map(deleteManagedImage)).catch(() => {});
+  await Promise.allSettled(orphanedImages.map(deleteManagedImage));
   return card;
 }
 
@@ -65,6 +64,5 @@ export async function deleteCard(user, deckId, cardId) {
   const card = await getCard(cardId, deckId);
   await CardProgress.deleteMany({ card: card._id });
   await Card.deleteOne({ _id: card._id });
-  // Best-effort image cleanup after the DB delete succeeds.
-  deleteManagedImagesForCard(card).catch(() => {});
+  await Promise.allSettled([deleteManagedImagesForCard(card)]);
 }

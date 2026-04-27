@@ -87,7 +87,7 @@ export async function deleteDeck(user, deckId) {
   await Assignment.deleteMany({ deck: access.deck._id });
   await StudySession.deleteMany({ deck: access.deck._id });
   await Deck.deleteOne({ _id: access.deck._id });
-  Promise.all(cards.map(deleteManagedImagesForCard)).catch(() => {});
+  await Promise.allSettled(cards.map(deleteManagedImagesForCard));
 }
 
 export async function exportDeck(user, deckId, format) {
