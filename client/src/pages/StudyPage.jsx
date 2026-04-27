@@ -17,6 +17,7 @@ export default function StudyPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [sessionDone, setSessionDone] = useState(false);
 
   const current = session?.questions?.[index];
 
@@ -36,6 +37,7 @@ export default function StudyPage() {
       setSession(res);
       setIndex(0);
       setStats(null);
+      setSessionDone(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -52,6 +54,7 @@ export default function StudyPage() {
         ...payload
       });
       setResult(res.isCorrect ? "Correct" : `Incorrect (expected: ${res.expected})`);
+      if (res.completed) setSessionDone(true);
       const statRes = await api.getStats(id);
       setStats(statRes);
     } catch (err) {
@@ -227,6 +230,13 @@ export default function StudyPage() {
               Needs Review
             </button>
           </div>
+        </section>
+      )}
+
+      {sessionDone && (
+        <section className="card">
+          <h3>Session Complete</h3>
+          <p>You've answered every card in this session.</p>
         </section>
       )}
 

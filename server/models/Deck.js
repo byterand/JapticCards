@@ -19,7 +19,8 @@ const deckSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  tags: [{ type: String }]
+  tags: [{ type: String }],
+  cardCounter: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model('Deck', deckSchema);

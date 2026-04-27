@@ -65,6 +65,10 @@ const studySessionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  answeredCardIds: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Card' }],
+    default: []
+  },
   completed: {
     type: Boolean,
     default: false

@@ -55,9 +55,6 @@ export async function createSession(user, { deckId, mode, sideFirst, needsReview
       user: user.userId,
       status: 'needs_review'
     }).select('card').lean();
-    if (!progress.length) {
-      throw new HttpError(400, 'No cards marked as Needs Review');
-    }
     cardFilter._id = { $in: progress.map((p) => p.card) };
   }
 
@@ -204,10 +201,32 @@ export async function submitAnswer(user, sessionId, payload) {
     { upsert: true, returnDocument: 'after' }
   );
 
+  // Track answered cards via $addToSet so duplicate submissions don't grow
+  // the set, and flip completed when every card has been answered at least
+  // once. Two-step (read-then-set) is fine here: completed is monotonic.
+  const tracked = await StudySession.findOneAndUpdate(
+    { _id: sessionId, user: user.userId },
+    { $addToSet: { answeredCardIds: card._id } },
+    { new: true, projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
+  );
+  let completed = Boolean(tracked?.completed);
+  if (!completed && tracked) {
+    const total = tracked.originalCardOrder?.length || 0;
+    const answered = tracked.answeredCardIds?.length || 0;
+    if (total > 0 && answered >= total) {
+      await StudySession.updateOne(
+        { _id: sessionId, user: user.userId, completed: false },
+        { $set: { completed: true } }
+      );
+      completed = true;
+    }
+  }
+
   return {
     isCorrect,
     expected: card.back,
-    cardProgress: progress
+    cardProgress: progress,
+    completed
   };
 }
 

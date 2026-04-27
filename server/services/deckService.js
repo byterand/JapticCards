@@ -6,6 +6,7 @@ import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
 import { parseCsv, serializeCsv } from '../utils/csv.js';
 import { HttpError } from '../utils/HttpError.js';
+import { runInTransaction } from '../utils/transaction.js';
 import { deleteManagedImagesForCard, inlineManagedImage, persistInlineImage } from '../utils/cardImages.js';
 
 export async function listUserDecks(userId) {
@@ -82,11 +83,14 @@ export async function deleteDeck(user, deckId) {
   // Fetch the image paths before deleting so we can sweep the files afterward.
   const cards = await Card.find({ deck: access.deck._id }).select('_id frontImage backImage');
   const cardIds = cards.map((card) => card._id);
-  await Card.deleteMany({ deck: access.deck._id });
-  await CardProgress.deleteMany({ card: { $in: cardIds } });
-  await Assignment.deleteMany({ deck: access.deck._id });
-  await StudySession.deleteMany({ deck: access.deck._id });
-  await Deck.deleteOne({ _id: access.deck._id });
+  await runInTransaction(async (session) => {
+    const opts = session ? { session } : {};
+    await Card.deleteMany({ deck: access.deck._id }, opts);
+    await CardProgress.deleteMany({ card: { $in: cardIds } }, opts);
+    await Assignment.deleteMany({ deck: access.deck._id }, opts);
+    await StudySession.deleteMany({ deck: access.deck._id }, opts);
+    await Deck.deleteOne({ _id: access.deck._id }, opts);
+  });
   await Promise.allSettled(cards.map(deleteManagedImagesForCard));
 }
 
@@ -195,5 +199,11 @@ export async function importDeck(userId, { format, content }) {
     order: index
   })));
   await Card.insertMany(cards);
+  // Align cardCounter so subsequent createCard reservations don't collide
+  // with the order values we just assigned (0..N-1).
+  await Deck.updateOne(
+    { _id: deck._id },
+    { $set: { cardCounter: cards.length } }
+  );
   return { deckId: deck._id };
 }
