@@ -113,11 +113,12 @@ export async function exportDeck(user, deckId, format) {
     return { contentType: 'application/json', body: JSON.stringify(payload, null, 2) };
   }
   if (format === 'csv') {
-    const columns = ['deckTitle', 'deckDescription', 'deckCategory', 'front', 'back', 'frontImage', 'backImage'];
+    const columns = ['deckTitle', 'deckDescription', 'deckCategory', 'deckTags', 'front', 'back', 'frontImage', 'backImage'];
     const rows = payload.cards.map((card) => ({
       deckTitle: payload.title,
       deckDescription: payload.description,
       deckCategory: payload.category,
+      deckTags: Array.isArray(payload.tags) ? payload.tags.join('|') : '',
       front: card.front,
       back: card.back,
       frontImage: card.frontImage,
@@ -142,10 +143,16 @@ export async function importDeck(userId, { format, content }) {
       if (!rows.length) {
         throw new HttpError(400, 'CSV must include at least one card row');
       }
+      const rawTags = rows[0].deckTags || '';
+      const tags = rawTags
+        .split('|')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
       data = {
         title: rows[0].deckTitle || 'Imported Deck',
         description: rows[0].deckDescription || '',
         category: rows[0].deckCategory || '',
+        tags,
         cards: rows.map((row) => ({
           front: row.front,
           back: row.back,
