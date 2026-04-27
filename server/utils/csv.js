@@ -7,6 +7,7 @@ export function parseCsv(content) {
     skip_empty_lines: true,
     trim: true,
     relax_quotes: true,
+    bom: true,
   });
 }
 

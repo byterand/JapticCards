@@ -29,6 +29,12 @@ export const config = {
   get clientOrigin() {
     return process.env.CLIENT_ORIGIN || 'http://localhost:3000';
   },
+  get port() {
+    const raw = process.env.PORT;
+    if (raw === undefined || raw === '') return 5000;
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : 5000;
+  },
   get isProduction() {
     return process.env.NODE_ENV === 'production';
   },

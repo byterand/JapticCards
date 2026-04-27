@@ -5,12 +5,13 @@ import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { uploadsRoot } from './utils/cardImages.js';
+import { config } from './config/env.js';
 
 const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
+  origin: config.clientOrigin,
   credentials: true
 }));
 
