@@ -12,8 +12,8 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path={ROUTES.LANDING} element={<LandingPage />} />
-      <Route path={ROUTES.LOGIN} element={<AuthForm />} />
-      <Route path={ROUTES.REGISTER} element={<AuthForm registerMode />} />
+      <Route path={ROUTES.LOGIN} element={<AuthForm key="login" />} />
+      <Route path={ROUTES.REGISTER} element={<AuthForm key="register" registerMode />} />
       <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path={ROUTES.DECK} element={<ProtectedRoute><DeckPage /></ProtectedRoute>} />
       <Route path={ROUTES.STUDY} element={<ProtectedRoute><StudyPage /></ProtectedRoute>} />

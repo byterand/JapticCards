@@ -32,16 +32,17 @@ describe("App auth routing", () => {
     window.history.pushState({}, "", "/dashboard");
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Login" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
     });
   });
 
   test("allows switching from login to register form", async () => {
     window.history.pushState({}, "", "/login");
     render(<App />);
-    await screen.findByRole("heading", { name: "Login" });
+    await screen.findByRole("heading", { name: "Welcome back" });
     const registerLinks = await screen.findAllByRole("link", { name: "Register" });
     await userEvent.click(registerLinks[0]);
+    expect(await screen.findByRole("heading", { name: "Create your account" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Create Account" })).toBeInTheDocument();
   });
 });

@@ -78,25 +78,6 @@ export default function LandingPage() {
           <li>Check stats to see which cards still need work.</li>
         </ol>
       </section>
-
-      <section className="landing-section">
-        <h3 className="section-title">{user ? "Quick links" : "Get started"}</h3>
-        <ul className="link-list">
-          {user ? (
-            <>
-              <li><Link to={ROUTES.DASHBOARD}>Your dashboard</Link></li>
-              {user.role === USER_ROLES.TEACHER && (
-                <li><Link to={ROUTES.TEACHER}>Teacher tools</Link></li>
-              )}
-            </>
-          ) : (
-            <>
-              <li><Link to={ROUTES.LOGIN}>Login to an existing account</Link></li>
-              <li><Link to={ROUTES.REGISTER}>Register a new account</Link></li>
-            </>
-          )}
-        </ul>
-      </section>
     </Layout>
   );
 }

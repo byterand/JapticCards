@@ -270,3 +270,170 @@ label {
   flex-direction: column;
   gap: 0.35rem;
 }
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f4f6fb;
+}
+
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.5rem;
+}
+
+.auth-header .brand {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.auth-switch {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #d2dae8;
+  border-radius: 8px;
+  background: #fff;
+  color: #132038;
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  /* Bottom padding ≈ header height so the content's optical center matches the viewport's, not auth-main's. */
+  padding: 1.5rem 1.5rem 4.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.auth-brand {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.auth-brand-title {
+  font-size: 1.9rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+}
+
+.auth-brand-body {
+  margin: 0;
+  color: #2c3a55;
+  line-height: 1.5;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0;
+  padding: 1.5rem;
+}
+
+.password-field {
+  position: relative;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.password-field input {
+  margin: 0;
+  padding-right: 4.5rem;
+}
+
+.toggle-pw {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #1a4c9c;
+}
+
+.toggle-pw:hover {
+  background: #eef3fb;
+  border-color: #c9d8ee;
+}
+
+.role-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 0.85rem;
+}
+
+.role-legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #d2dae8;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.role-card:hover {
+  border-color: #aab8d1;
+}
+
+.role-card.is-selected {
+  border-color: #1a4c9c;
+  background: #eef3fb;
+  box-shadow: 0 0 0 1px #1a4c9c inset;
+}
+
+.role-card input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.role-card-label {
+  font-weight: 600;
+}
+
+.role-card-description {
+  font-size: 0.85rem;
+  color: #2c3a55;
+  line-height: 1.35;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+  margin-top: 0.4rem;
+}
+
+.auth-switch-prose {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  color: #2c3a55;
+}
