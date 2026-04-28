@@ -278,26 +278,6 @@ label {
   background: #f4f6fb;
 }
 
-.auth-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.9rem 1.5rem;
-}
-
-.auth-header .brand {
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
-.auth-switch {
-  padding: 0.4rem 0.9rem;
-  border: 1px solid #d2dae8;
-  border-radius: 8px;
-  background: #fff;
-  color: #132038;
-}
-
 .auth-main {
   flex: 1;
   display: flex;

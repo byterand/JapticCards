@@ -80,9 +80,13 @@ export default function AuthForm({ registerMode = false }) {
 
   return (
     <div className="auth-shell">
-      <header className="auth-header">
-        <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
-        <Link to={switchTo} className="auth-switch">{switchLabel}</Link>
+      <header className="header">
+        <h1>
+          <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
+        </h1>
+        <nav>
+          <Link to={switchTo} className="btn">{switchLabel}</Link>
+        </nav>
       </header>
 
       <main className="auth-main">

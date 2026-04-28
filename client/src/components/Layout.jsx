@@ -13,15 +13,15 @@ export default function Layout({ children }) {
           <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
         </h1>
         <nav>
-          <Link to={ROUTES.LANDING}>Home</Link>
           {user ? (
             <>
-              <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
+              <Link to={ROUTES.DASHBOARD} className="btn">Dashboard</Link>
               {user.role === USER_ROLES.TEACHER && (
-                <Link to={ROUTES.TEACHER}>Teacher</Link>
+                <Link to={ROUTES.TEACHER} className="btn">Teacher</Link>
               )}
               <button
                 type="button"
+                className="btn"
                 onClick={async () => {
                   await logout();
                   navigate(ROUTES.LANDING);
@@ -32,8 +32,8 @@ export default function Layout({ children }) {
             </>
           ) : (
             <>
-              <Link to={ROUTES.LOGIN}>Login</Link>
-              <Link to={ROUTES.REGISTER}>Register</Link>
+              <Link to={ROUTES.LOGIN} className="btn">Login</Link>
+              <Link to={ROUTES.REGISTER} className="btn btn-primary">Register</Link>
             </>
           )}
         </nav>
