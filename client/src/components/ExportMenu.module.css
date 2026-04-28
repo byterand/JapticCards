@@ -6,13 +6,16 @@
 .menu summary {
   list-style: none;
   cursor: pointer;
-  display: inline-block;
-  padding: 0.45rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.9rem;
   border: 1px solid #d2dae8;
-  background: white;
+  background: #fff;
   border-radius: 8px;
   font-size: inherit;
   font-family: inherit;
+  line-height: 1.2;
   color: #132038;
 }
 
@@ -20,15 +23,22 @@
   display: none;
 }
 
-.menu[open] summary {
+.menu[open] summary,
+.menu summary:hover {
   border-color: #aab8d1;
+}
+
+.compact summary {
+  min-width: 2.4rem;
+  padding: 0.55rem 0.5rem;
+  font-size: 1rem;
 }
 
 .popover {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  min-width: 140px;
+  min-width: 180px;
   background: #fff;
   border: 1px solid #d2dae8;
   border-radius: 8px;

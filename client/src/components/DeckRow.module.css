@@ -35,15 +35,16 @@
 
 .pill {
   font-size: 0.72rem;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
-  background: #eef3fb;
-  color: #1a4c9c;
+  background: #cfdef5;
+  color: #0e3270;
+  font-weight: 500;
 }
 
 .pill.muted {
-  background: #f0f2f7;
-  color: #5a6478;
+  background: #d3d9e4;
+  color: #37404f;
 }
 
 .meta {
@@ -56,6 +57,17 @@
   display: flex;
   gap: 0.35rem;
   flex-shrink: 0;
+  align-items: center;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  padding: 0.55rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .mini {

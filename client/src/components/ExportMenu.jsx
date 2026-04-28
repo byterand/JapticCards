@@ -2,7 +2,13 @@ import { useEffect, useRef } from "react";
 import { EXPORT_FORMATS } from "../constants";
 import styles from "./ExportMenu.module.css";
 
-export default function ExportMenu({ onExport, label = "Export", disabled = false }) {
+export default function ExportMenu({
+  onExport,
+  label = "Export",
+  ariaLabel,
+  compact = false,
+  disabled = false
+}) {
   const detailsRef = useRef(null);
 
   // Close the popover on outside-click so it behaves like a normal menu.
@@ -22,8 +28,10 @@ export default function ExportMenu({ onExport, label = "Export", disabled = fals
   };
 
   return (
-    <details ref={detailsRef} className={styles.menu}>
-      <summary aria-disabled={disabled}>{label}</summary>
+    <details ref={detailsRef} className={`${styles.menu} ${compact ? styles.compact : ""}`}>
+      <summary aria-label={ariaLabel || (typeof label === "string" ? label : undefined)} title={ariaLabel}>
+        {label}
+      </summary>
       <div className={styles.popover} role="menu">
         <button
           type="button"
@@ -32,7 +40,7 @@ export default function ExportMenu({ onExport, label = "Export", disabled = fals
           onClick={() => pick(EXPORT_FORMATS.JSON)}
           disabled={disabled}
         >
-          As JSON
+          Export as JSON
         </button>
         <button
           type="button"
@@ -41,7 +49,7 @@ export default function ExportMenu({ onExport, label = "Export", disabled = fals
           onClick={() => pick(EXPORT_FORMATS.CSV)}
           disabled={disabled}
         >
-          As CSV
+          Export as CSV
         </button>
       </div>
     </details>

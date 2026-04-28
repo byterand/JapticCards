@@ -190,13 +190,13 @@ export default function DeckPage() {
           </div>
           <div className="actions">
             {!deck.readOnly && (
-              <button type="button" onClick={() => setEditing((v) => !v)}>
+              <button type="button" className="btn" onClick={() => setEditing((v) => !v)}>
                 {editing ? "Cancel edit" : "Edit"}
               </button>
             )}
             <ExportMenu onExport={handleExport} />
             {!deck.readOnly && (
-              <button type="button" className="btn-danger" onClick={handleDelete}>
+              <button type="button" className="btn btn-danger" onClick={handleDelete}>
                 Delete
               </button>
             )}

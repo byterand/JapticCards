@@ -52,11 +52,22 @@ export default function DeckRow({
         )}
         <Link to={buildPath.study(deck._id)} className="btn btn-primary">Study</Link>
         {!isMini && onExport && (
-          <ExportMenu onExport={(format) => onExport(deck, format)} />
+          <ExportMenu
+            compact
+            label="⤓"
+            ariaLabel="Export deck"
+            onExport={(format) => onExport(deck, format)}
+          />
         )}
         {!isMini && !deck.readOnly && onDelete && (
-          <button type="button" className="btn-danger" onClick={() => onDelete(deck)}>
-            Delete
+          <button
+            type="button"
+            className={`btn-danger ${styles.iconBtn}`}
+            aria-label="Delete deck"
+            title="Delete deck"
+            onClick={() => onDelete(deck)}
+          >
+            ✕
           </button>
         )}
       </div>

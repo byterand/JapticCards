@@ -41,15 +41,16 @@
 
 .pill {
   font-size: 0.78rem;
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: #eef3fb;
-  color: #1a4c9c;
+  background: #cfdef5;
+  color: #0e3270;
+  font-weight: 500;
 }
 
 .pill.muted {
-  background: #f0f2f7;
-  color: #5a6478;
+  background: #d3d9e4;
+  color: #37404f;
 }
 
 .editForm {
@@ -60,7 +61,7 @@
 
 .setupRow {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
   align-items: end;
 }
