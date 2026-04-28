@@ -1,0 +1,30 @@
+.btn {
+  display: inline-block;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #d2dae8;
+  background: #fff;
+  color: #132038;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #1a4c9c;
+  border-color: #1a4c9c;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #163f80;
+  border-color: #163f80;
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border-color: #a82a1c;
+}
+
+.btn-danger:hover {
+  background: #a82a1c;
+}

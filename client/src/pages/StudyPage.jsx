@@ -10,6 +10,7 @@ import {
   STUDY_MODES,
   STUDY_MODE_LABELS
 } from "../constants";
+import styles from "./StudyPage.module.css";
 
 const STATUS_BUTTONS = [
   CARD_STATUS.KNOWN,
@@ -20,7 +21,7 @@ const STATUS_BUTTONS = [
 function FlipCard({ current, sideFirst, flipped, onFlip }) {
   const showFront = sideFirst === CARD_SIDES.FRONT ? !flipped : flipped;
   return (
-    <button type="button" className="flashcard" onClick={onFlip}>
+    <button type="button" className={styles.flashcard} onClick={onFlip}>
       {showFront ? current.front : current.back}
     </button>
   );

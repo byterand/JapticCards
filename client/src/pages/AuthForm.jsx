@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES, USER_ROLES } from "../constants";
+import styles from "./AuthForm.module.css";
 
 const AUTH_STAGES = {
   LOGIN: "login",
@@ -79,7 +80,7 @@ export default function AuthForm({ registerMode = false }) {
     : "Sign in to pick up where you left off.";
 
   return (
-    <div className="auth-shell">
+    <div className={styles.authShell}>
       <header className="header">
         <h1>
           <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
@@ -89,13 +90,13 @@ export default function AuthForm({ registerMode = false }) {
         </nav>
       </header>
 
-      <main className="auth-main">
-        <section className="auth-brand">
-          <h2 className="auth-brand-title">{brandTitle}</h2>
-          <p className="auth-brand-body">{brandBody}</p>
+      <main className={styles.authMain}>
+        <section className={styles.authBrand}>
+          <h2 className={styles.authBrandTitle}>{brandTitle}</h2>
+          <p className={styles.authBrandBody}>{brandBody}</p>
         </section>
 
-        <form className="card auth-card" onSubmit={onSubmit}>
+        <form className={`card ${styles.authCard}`} onSubmit={onSubmit}>
           {error && <p className="error">{error}</p>}
 
           <label>
@@ -111,7 +112,7 @@ export default function AuthForm({ registerMode = false }) {
 
           <label>
             Password
-            <div className="password-field">
+            <div className={styles.passwordField}>
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
@@ -121,7 +122,7 @@ export default function AuthForm({ registerMode = false }) {
               />
               <button
                 type="button"
-                className="toggle-pw"
+                className={styles.togglePw}
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -144,13 +145,13 @@ export default function AuthForm({ registerMode = false }) {
           )}
 
           {registerMode && (
-            <fieldset className="role-fieldset">
-              <legend className="role-legend">Role</legend>
-              <div className="role-cards">
+            <fieldset className={styles.roleFieldset}>
+              <legend className={styles.roleLegend}>Role</legend>
+              <div className={styles.roleCards}>
                 {ROLE_OPTIONS.map((opt) => (
                   <label
                     key={opt.value}
-                    className={`role-card${role === opt.value ? " is-selected" : ""}`}
+                    className={`${styles.roleCard}${role === opt.value ? ` ${styles.isSelected}` : ""}`}
                   >
                     <input
                       type="radio"
@@ -159,19 +160,19 @@ export default function AuthForm({ registerMode = false }) {
                       checked={role === opt.value}
                       onChange={() => setRole(opt.value)}
                     />
-                    <span className="role-card-label">{opt.label}</span>
-                    <span className="role-card-description">{opt.description}</span>
+                    <span className={styles.roleCardLabel}>{opt.label}</span>
+                    <span className={styles.roleCardDescription}>{opt.description}</span>
                   </label>
                 ))}
               </div>
             </fieldset>
           )}
 
-          <button type="submit" className="btn btn-primary auth-submit">
+          <button type="submit" className={`btn btn-primary ${styles.authSubmit}`}>
             {submitLabel}
           </button>
 
-          <p className="auth-switch-prose">
+          <p className={styles.authSwitchProse}>
             {switchPrompt} <Link to={switchTo}>{switchLabel}</Link>
           </p>
         </form>

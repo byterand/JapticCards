@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
 import { ACCESS_LEVELS } from "../constants";
+import styles from "./TeacherPage.module.css";
 
 export default function TeacherPage() {
   const [students, setStudents] = useState([]);
@@ -79,7 +80,7 @@ export default function TeacherPage() {
         </label>
         <p>Students</p>
         {students.map((student) => (
-          <label key={student._id} className="checkbox">
+          <label key={student._id} className={styles.checkbox}>
             <input
               type="checkbox"
               checked={selectedStudents.includes(student._id)}

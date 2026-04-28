@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import styles from "./ConfirmModal.module.css";
 
 export default function ConfirmModal({
   open,
@@ -38,14 +39,14 @@ export default function ConfirmModal({
   return (
     <dialog
       ref={dialogRef}
-      className="modal"
+      className={styles.modal}
       aria-labelledby="confirm-modal-title"
       onCancel={handleCancelEvent}
       onClick={handleBackdropClick}
     >
       <h3 id="confirm-modal-title">{title}</h3>
       {message && <p>{message}</p>}
-      <div className="modal-actions">
+      <div className={styles.modalActions}>
         <button type="button" onClick={onCancel}>{cancelLabel}</button>
         <button
           ref={confirmBtnRef}

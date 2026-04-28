@@ -5,6 +5,7 @@ import ImportDeckForm from "../components/ImportDeckForm";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
 import { CONTENT_TYPE_BY_FORMAT, CONTENT_TYPES, EXPORT_FORMATS, buildPath } from "../constants";
+import styles from "./DashboardPage.module.css";
 
 export default function DashboardPage() {
   const [decks, setDecks] = useState([]);
@@ -135,7 +136,7 @@ export default function DashboardPage() {
 
         <section className="card">
           <h2>Your Decks</h2>
-          <div className="filters">
+          <div className={styles.filters}>
             <input
               placeholder="Search by title"
               value={search}
@@ -171,7 +172,7 @@ export default function DashboardPage() {
               <div className="actions">
                 <Link to={buildPath.deck(deck._id)}>Open</Link>
                 <Link to={buildPath.study(deck._id)}>Study</Link>
-                <span className="exportGroup">
+                <span className={styles.exportGroup}>
                   <select
                     aria-label="Export format"
                     value={exportFormats[deck._id] || EXPORT_FORMATS.JSON}

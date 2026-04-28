@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES, USER_ROLES } from "../constants";
+import styles from "./LandingPage.module.css";
 
 const FEATURES = [
   {
@@ -27,12 +28,12 @@ export default function LandingPage() {
 
   return (
     <Layout>
-      <section className="hero">
-        <h2 className="hero-title">A flashcard platform for classes and self-study</h2>
-        <p className="hero-sub">
+      <section className={styles.hero}>
+        <h2 className={styles.heroTitle}>A flashcard platform for classes and self-study</h2>
+        <p className={styles.heroSub}>
           Japtic Cards is a flashcard platform for self-study and classes. Build your own decks, study them in multiple modes, and track your progress per card &mdash; students can also work through decks assigned by their teachers.
         </p>
-        <div className="hero-actions">
+        <div className={styles.heroActions}>
           {loading ? null : user ? (
             <>
               <Link className="btn btn-primary" to={ROUTES.DASHBOARD}>
@@ -57,9 +58,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="landing-section">
-        <h3 className="section-title">What's inside</h3>
-        <div className="feature-grid">
+      <section className={styles.landingSection}>
+        <h3 className={styles.sectionTitle}>What's inside</h3>
+        <div className={styles.featureGrid}>
           {FEATURES.map((f) => (
             <div key={f.title} className="card">
               <h4 style={{ marginTop: 0 }}>{f.title}</h4>
@@ -69,9 +70,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="landing-section">
-        <h3 className="section-title">How it works</h3>
-        <ol className="steps">
+      <section className={styles.landingSection}>
+        <h3 className={styles.sectionTitle}>How it works</h3>
+        <ol className={styles.steps}>
           <li>Sign up as a student or teacher.</li>
           <li>Build a deck — or, as a student, study one assigned to you.</li>
           <li>Pick a study mode and run a session; the server records what you got right and wrong.</li>

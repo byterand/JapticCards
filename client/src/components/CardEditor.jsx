@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, imageUrl } from "../services/api";
 import useConfirm from "../hooks/useConfirm";
+import styles from "./CardEditor.module.css";
 
 export default function CardEditor({ card, deckId, readOnly, onSaved, onError }) {
   const [front, setFront] = useState(card.front);
@@ -46,10 +47,10 @@ export default function CardEditor({ card, deckId, readOnly, onSaved, onError })
       <div>
         <strong>{card.front}</strong> -&gt; {card.back}
         {card.frontImage && (
-          <img src={imageUrl(card.frontImage)} alt="Front visual" className="thumb" />
+          <img src={imageUrl(card.frontImage)} alt="Front visual" className={styles.thumb} />
         )}
         {card.backImage && (
-          <img src={imageUrl(card.backImage)} alt="Back visual" className="thumb" />
+          <img src={imageUrl(card.backImage)} alt="Back visual" className={styles.thumb} />
         )}
       </div>
       {!readOnly && (
