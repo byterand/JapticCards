@@ -1,8 +1,8 @@
 .shell {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 900px) {
@@ -64,66 +64,181 @@
   color: #37404f;
 }
 
-.setupRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  align-items: end;
+.setupCard h3 {
+  margin: 0 0 0.85rem;
 }
 
-@media (max-width: 640px) {
-  .setupRow {
-    grid-template-columns: 1fr;
-  }
+.field {
+  margin: 0.85rem 0 0;
 }
 
-.setupRow select {
-  margin: 0;
+.field:first-of-type {
+  margin-top: 0;
 }
 
-.checkboxField {
+.fieldLabel {
+  display: block;
+  font-size: 0.7rem;
+  color: #5a6478;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 3px;
+  background: #eef2f9;
+  border: 1px solid #dbe2ef;
+  border-radius: 10px;
+}
+
+.segBtn {
+  flex: 1 1 auto;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.4rem 0.6rem;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 0.82rem;
+  color: #37404f;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  white-space: nowrap;
+}
+
+.segBtn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: #132038;
+}
+
+.segActive {
+  background: #fff;
+  color: #0e3270;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(19, 32, 56, 0.08);
+  border-color: #cfdef5;
+}
+
+.segActive:hover {
+  background: #fff;
+  color: #0e3270;
+}
+
+.toggleField {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin: 0.6rem 0 0;
-  font-size: 0.9rem;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin: 0.95rem 0 0;
+  font-size: 0.92rem;
+  cursor: pointer;
+  user-select: none;
 }
 
-.checkboxField input {
-  width: auto;
+.toggleLabel {
+  flex: 1;
+  color: #132038;
+}
+
+.toggleInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.startRow {
-  margin-top: 0.85rem;
+.toggleSlider {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: #d2dae8;
+  flex-shrink: 0;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toggleSlider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleInput:checked + .toggleSlider {
+  background: #1a4c9c;
+}
+
+.toggleInput:checked + .toggleSlider::before {
+  transform: translateX(16px);
+}
+
+.toggleInput:focus-visible + .toggleSlider {
+  box-shadow: 0 0 0 3px rgba(26, 76, 156, 0.25);
+}
+
+.startBtn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.65rem 0.9rem;
+  font-weight: 500;
+}
+
+.statsCard {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+}
+
+.statsCard h3 {
+  margin: 0 0 0.85rem;
 }
 
 .statsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  grid-auto-rows: 1fr;
+  gap: 0.6rem;
+  flex: 1;
 }
 
 .stat {
   background: #fff;
   border: 1px solid #e4e9f2;
-  border-radius: 8px;
-  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 86px;
 }
 
 .statLabel {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #5a6478;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 
 .statValue {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0.1rem 0 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0.3rem 0 0;
   color: #132038;
+  line-height: 1.1;
 }
 
 .cardsHeader {

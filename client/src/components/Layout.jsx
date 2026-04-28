@@ -9,13 +9,17 @@ export default function Layout({ children }) {
   return (
     <div>
       <header className="header">
-        <h1>
-          <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
-        </h1>
+        <div className="header-left">
+          <h1>
+            <Link to={ROUTES.LANDING} className="brand">Japtic Cards</Link>
+          </h1>
+          {user && (
+            <Link to={ROUTES.DASHBOARD} className="btn">Dashboard</Link>
+          )}
+        </div>
         <nav>
           {user ? (
             <>
-              <Link to={ROUTES.DASHBOARD} className="btn">Dashboard</Link>
               {user.role === USER_ROLES.TEACHER && (
                 <Link to={ROUTES.TEACHER} className="btn">Teacher</Link>
               )}

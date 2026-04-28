@@ -161,40 +161,60 @@ export default function DeckPage() {
       </section>
 
       <div className={styles.shell}>
-        <section className="card">
+        <section className={`card ${styles.setupCard}`}>
           <h3>Study setup</h3>
-          <div className={styles.setupRow}>
-            <label>
-              Mode
-              <select value={mode} onChange={(e) => setMode(e.target.value)}>
-                {Object.values(STUDY_MODES).map((m) => (
-                  <option key={m} value={m}>{STUDY_MODE_LABELS[m]}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              First side
-              <select value={sideFirst} onChange={(e) => setSideFirst(e.target.value)}>
-                {Object.values(CARD_SIDES).map((s) => (
-                  <option key={s} value={s}>{CARD_SIDE_LABELS[s]}</option>
-                ))}
-              </select>
-            </label>
+
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>Mode</span>
+            <div className={styles.segmented} role="group" aria-label="Study mode">
+              {Object.values(STUDY_MODES).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`${styles.segBtn} ${mode === m ? styles.segActive : ""}`}
+                  onClick={() => setMode(m)}
+                  aria-pressed={mode === m}
+                >
+                  {STUDY_MODE_LABELS[m]}
+                </button>
+              ))}
+            </div>
           </div>
-          <label className={styles.checkboxField}>
+
+          <div className={styles.field}>
+            <span className={styles.fieldLabel}>First side</span>
+            <div className={styles.segmented} role="group" aria-label="First side">
+              {Object.values(CARD_SIDES).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`${styles.segBtn} ${sideFirst === s ? styles.segActive : ""}`}
+                  onClick={() => setSideFirst(s)}
+                  aria-pressed={sideFirst === s}
+                >
+                  {CARD_SIDE_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className={styles.toggleField}>
+            <span className={styles.toggleLabel}>Needs review only</span>
             <input
               type="checkbox"
+              className={styles.toggleInput}
               checked={needsReviewOnly}
               onChange={(e) => setNeedsReviewOnly(e.target.checked)}
             />
-            Needs review only
+            <span className={styles.toggleSlider} aria-hidden="true" />
           </label>
-          <div className={styles.startRow}>
-            <Link to={studyUrl} className="btn btn-primary">Start study session</Link>
-          </div>
+
+          <Link to={studyUrl} className={`btn btn-primary ${styles.startBtn}`}>
+            Start study session
+          </Link>
         </section>
 
-        <section className="card">
+        <section className={`card ${styles.statsCard}`}>
           <h3>Stats</h3>
           {!stats ? (
             <p>Loading stats...</p>
