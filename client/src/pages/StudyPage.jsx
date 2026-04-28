@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api, imageUrl } from "../services/api";
@@ -226,6 +226,9 @@ export default function StudyPage() {
   const currentStatus = current ? statusByCard[String(current.cardId)] : undefined;
   const answered = !!feedback;
 
+  const currentCardIdRef = useRef(null);
+  currentCardIdRef.current = current?.cardId ?? null;
+
   // Reset per-card state when navigating between cards or starting a new session
   useEffect(() => {
     setFlipped(false);
@@ -299,19 +302,23 @@ export default function StudyPage() {
 
   const submitAnswer = useCallback(async (payload, selectedDisplay) => {
     if (!session || !current || submitting || answered) return;
+    const submittedCardId = current.cardId;
     setSubmitting(true);
     setError("");
     setSelected(selectedDisplay);
     try {
       const res = await api.answerSession(session.sessionId, {
-        cardId: current.cardId,
+        cardId: submittedCardId,
         ...payload
       });
+      if (currentCardIdRef.current !== submittedCardId) return;
       setFeedback({ isCorrect: res.isCorrect, expected: res.expected });
       if (res.completed) setSessionDone(true);
       const statRes = await api.getStats(id);
+      if (currentCardIdRef.current !== submittedCardId) return;
       setStats(statRes);
     } catch (err) {
+      if (currentCardIdRef.current !== submittedCardId) return;
       setError(err.message);
       setSelected(null);
     } finally {

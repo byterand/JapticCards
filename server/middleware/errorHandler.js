@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { HttpError } from '../utils/HttpError.js';
 
 // Centralized error middleware. Services throw HttpError for client-facing
@@ -5,6 +6,12 @@ import { HttpError } from '../utils/HttpError.js';
 export function errorHandler(err, req, res, _) {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ message: err.message });
+  }
+  if (err instanceof mongoose.Error.CastError) {
+    return res.status(400).json({ message: `Invalid ${err.path}` });
+  }
+  if (err instanceof mongoose.Error.ValidationError) {
+    return res.status(400).json({ message: err.message });
   }
 
   console.error(err);

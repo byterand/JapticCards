@@ -238,28 +238,29 @@ export async function importDeck(userId, { format, content }) {
     throw new HttpError(400, 'Each imported card must include front and back text.');
   }
 
-  const deck = await Deck.create({
+  const cardDocs = await Promise.all(data.cards.map(async (card, index) => ({
     owner: userId,
-    title: data.title,
-    description: data.description || '',
-    category: data.category || '',
-    tags: normalizeTags(data.tags)
-  });
-  const cards = await Promise.all(data.cards.map(async (card, index) => ({
-    owner: userId,
-    deck: deck._id,
     front: card.front,
     back: card.back,
     frontImage: await persistInlineImage(card.frontImage || ''),
     backImage: await persistInlineImage(card.backImage || ''),
     order: index
   })));
-  await Card.insertMany(cards);
-  // Align cardCounter so subsequent createCard reservations don't collide
-  // with the order values we just assigned (0..N-1).
-  await Deck.updateOne(
-    { _id: deck._id },
-    { $set: { cardCounter: cards.length } }
-  );
-  return { deckId: deck._id };
+
+  const deckId = await withTransaction(async (session) => {
+    const [deck] = await Deck.create([{
+      owner: userId,
+      title: data.title,
+      description: data.description || '',
+      category: data.category || '',
+      tags: normalizeTags(data.tags),
+      cardCounter: cardDocs.length
+    }], { session });
+    await Card.insertMany(
+      cardDocs.map((c) => ({ ...c, deck: deck._id })),
+      { session }
+    );
+    return deck._id;
+  });
+  return { deckId };
 }

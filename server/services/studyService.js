@@ -20,10 +20,11 @@ function sameId(a, b) {
 // Returns the prompt + options the client sees AND the correctAnswer that
 // stays server-side (persisted on the session, never returned to the client).
 function buildMultipleChoiceQuestion(card, cards) {
+  // Exclude both this card and any card whose back matches it, otherwise
+  // the prompt would have multiple visually-identical "correct" options.
   const distractors = cards
-    .filter((c) => !sameId(c._id, card._id))
-    .map((c) => c.back)
-    .filter(Boolean);
+    .filter((c) => !sameId(c._id, card._id) && c.back && c.back !== card.back)
+    .map((c) => c.back);
   const uniqueDistractors = [...new Set(distractors)].slice(0, MC_DISTRACTOR_COUNT);
   while (uniqueDistractors.length < MC_DISTRACTOR_COUNT) {
     uniqueDistractors.push(`${card.back} (alt ${uniqueDistractors.length + 1})`);
