@@ -1,5 +1,57 @@
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.subhead {
+  margin: 0.15rem 0 0;
+  color: #5a6478;
+  font-size: 0.9rem;
+}
+
+.progress {
+  margin: 0 0 0.7rem;
+  font-size: 0.85rem;
+  color: #5a6478;
+}
+
+.result {
+  margin: 0.6rem 0 0.4rem;
+  font-weight: 600;
+  color: #132038;
+}
+
+.choiceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+.choiceGrid button {
+  width: 100%;
+}
+
 .flashcard {
   width: 100%;
-  min-height: 130px;
-  font-size: 1.2rem;
+  min-height: 180px;
+  font-size: 1.3rem;
+  border: 1px solid #d2dae8;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.flashcard:hover {
+  border-color: #aab8d1;
 }

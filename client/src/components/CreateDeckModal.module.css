@@ -1,0 +1,15 @@
+.field {
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.field span {
+  display: block;
+  font-size: 0.85rem;
+  color: #2c3a55;
+  margin-bottom: 0.2rem;
+}
+
+.field input {
+  margin: 0;
+}

@@ -39,7 +39,7 @@ export default function ConfirmModal({
   return (
     <dialog
       ref={dialogRef}
-      className={styles.modal}
+      className="modal"
       aria-labelledby="confirm-modal-title"
       onCancel={handleCancelEvent}
       onClick={handleBackdropClick}

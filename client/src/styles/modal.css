@@ -1,0 +1,28 @@
+.modal {
+  background: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  min-width: 280px;
+  max-width: 460px;
+  box-shadow: 0 12px 32px rgba(15, 25, 45, 0.25);
+}
+
+.modal::backdrop {
+  background: rgba(15, 25, 45, 0.45);
+}
+
+.modal h3 {
+  margin: 0 0 0.5rem;
+}
+
+.modal p {
+  margin: 0 0 1rem;
+  color: #2c3a55;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

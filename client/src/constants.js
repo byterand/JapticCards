@@ -8,6 +8,8 @@ export const STUDY_MODES = {
   WRITTEN_ANSWER: "written_answer"
 };
 
+export const STUDY_MODE_VALUES = Object.values(STUDY_MODES);
+
 export const STUDY_MODE_LABELS = {
   [STUDY_MODES.FLIP]: "Flip",
   [STUDY_MODES.MULTIPLE_CHOICE]: "Multiple Choice",
@@ -19,6 +21,8 @@ export const CARD_SIDES = {
   FRONT: "front",
   BACK: "back"
 };
+
+export const CARD_SIDE_VALUES = Object.values(CARD_SIDES);
 
 export const CARD_SIDE_LABELS = {
   [CARD_SIDES.FRONT]: "Front",

@@ -1,0 +1,72 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e4e9f2;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  background: #fff;
+}
+
+.main {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #132038;
+  text-decoration: none;
+}
+
+.title:hover {
+  text-decoration: underline;
+}
+
+.pill {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef3fb;
+  color: #1a4c9c;
+}
+
+.pill.muted {
+  background: #f0f2f7;
+  color: #5a6478;
+}
+
+.meta {
+  font-size: 0.78rem;
+  color: #5a6478;
+  margin: 0.15rem 0 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.mini {
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.mini .title {
+  font-size: 0.92rem;
+}
+
+.mini .meta {
+  font-size: 0.72rem;
+}

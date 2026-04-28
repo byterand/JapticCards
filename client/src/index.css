@@ -1,6 +1,7 @@
 @import "./styles/buttons.css";
 @import "./styles/layout.css";
 @import "./styles/shared.css";
+@import "./styles/modal.css";
 
 * {
   box-sizing: border-box;
@@ -33,8 +34,4 @@ input, select {
   padding: 0.5rem;
   border-radius: 8px;
   border: 1px solid #c9d1de;
-}
-
-label {
-  display: block;
 }

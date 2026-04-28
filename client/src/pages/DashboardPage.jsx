@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
-import ImportDeckForm from "../components/ImportDeckForm";
+import CreateDeckModal from "../components/CreateDeckModal";
+import ImportDeckModal from "../components/ImportDeckModal";
+import DeckRow from "../components/DeckRow";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
-import { CONTENT_TYPE_BY_FORMAT, CONTENT_TYPES, EXPORT_FORMATS, buildPath } from "../constants";
+import { CONTENT_TYPE_BY_FORMAT, CONTENT_TYPES } from "../constants";
 import styles from "./DashboardPage.module.css";
+
+const CONTINUE_LIMIT = 3;
 
 export default function DashboardPage() {
   const [decks, setDecks] = useState([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState("");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [error, setError] = useState("");
-  const [exportFormats, setExportFormats] = useState({});
+  const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { confirm, modal } = useConfirm();
-
-  const setExportFormat = useCallback((deckId, format) => {
-    setExportFormats((prev) => ({ ...prev, [deckId]: format }));
-  }, []);
 
   const loadDecks = useCallback(async () => {
     try {
@@ -32,9 +28,12 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const handleExport = useCallback(async (deck) => {
+  useEffect(() => {
+    loadDecks();
+  }, [loadDecks]);
+
+  const handleExport = useCallback(async (deck, format) => {
     setError("");
-    const format = (exportFormats[deck._id] || EXPORT_FORMATS.JSON).toLowerCase();
     try {
       const content = await api.exportDeck(deck._id, format);
       const blobType = CONTENT_TYPE_BY_FORMAT[format] || CONTENT_TYPES.JSON;
@@ -50,7 +49,7 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err.message);
     }
-  }, [exportFormats]);
+  }, []);
 
   const handleDelete = useCallback(async (deck) => {
     const ok = await confirm({
@@ -68,11 +67,6 @@ export default function DashboardPage() {
     }
   }, [confirm, loadDecks]);
 
-  useEffect(() => {
-    loadDecks();
-  }, [loadDecks]);
-
-  // Recompute only when the inputs that affect the filter change.
   const filtered = useMemo(
     () => decks.filter((deck) => {
       const matchesSearch = deck.title.toLowerCase().includes(search.toLowerCase());
@@ -87,55 +81,38 @@ export default function DashboardPage() {
     [decks]
   );
 
+  const totals = useMemo(() => {
+    const owned = decks.filter((d) => !d.readOnly).length;
+    const assigned = decks.length - owned;
+    return { owned, assigned, decks: decks.length, categories: categories.length };
+  }, [decks, categories]);
+
+  const recent = useMemo(
+    () => [...decks]
+      .filter((d) => d.updatedAt)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, CONTINUE_LIMIT),
+    [decks]
+  );
+
   return (
     <Layout>
-      <div className="grid">
-        <section className="card">
-          <h2>Create Deck</h2>
-          {error && <p className="error">{error}</p>}
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setError("");
-              try {
-                await api.createDeck({
-                  title,
-                  description,
-                  category,
-                  tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
-                });
-                setTitle("");
-                setDescription("");
-                setCategory("");
-                setTags("");
-                await loadDecks();
-              } catch (err) {
-                setError(err.message);
-              }
-            }}
-          >
-            <label>
-              Title
-              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </label>
-            <label>
-              Description
-              <input value={description} onChange={(e) => setDescription(e.target.value)} />
-            </label>
-            <label>
-              Category
-              <input value={category} onChange={(e) => setCategory(e.target.value)} />
-            </label>
-            <label>
-              Tags (comma-separated)
-              <input value={tags} onChange={(e) => setTags(e.target.value)} />
-            </label>
-            <button type="submit">Create Deck</button>
-          </form>
-        </section>
+      <div className={styles.head}>
+        <h2 className={styles.heading}>Your decks</h2>
+        <div className={styles.headActions}>
+          <button type="button" className="btn" onClick={() => setImportOpen(true)}>
+            Import deck
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+            New deck
+          </button>
+        </div>
+      </div>
 
-        <section className="card">
-          <h2>Your Decks</h2>
+      {error && <p className="error">{error}</p>}
+
+      <div className={styles.shell}>
+        <section>
           <div className={styles.filters}>
             <input
               placeholder="Search by title"
@@ -161,49 +138,73 @@ export default function DashboardPage() {
               Clear
             </button>
           </div>
-          {filtered.length === 0 && <p>No results found.</p>}
-          {filtered.map((deck) => (
-            <article key={deck._id} className="deckRow">
-              <div>
-                <strong>{deck.title}</strong> {deck.category ? `(${deck.category})` : ""}
-                <p>{deck.description}</p>
-                {deck.readOnly && <small>Assigned deck (read-only)</small>}
-              </div>
-              <div className="actions">
-                <Link to={buildPath.deck(deck._id)}>Open</Link>
-                <Link to={buildPath.study(deck._id)}>Study</Link>
-                <span className={styles.exportGroup}>
-                  <select
-                    aria-label="Export format"
-                    value={exportFormats[deck._id] || EXPORT_FORMATS.JSON}
-                    onChange={(e) => setExportFormat(deck._id, e.target.value)}
-                  >
-                    <option value={EXPORT_FORMATS.JSON}>JSON</option>
-                    <option value={EXPORT_FORMATS.CSV}>CSV</option>
-                  </select>
-                  <button type="button" onClick={() => handleExport(deck)}>
-                    Export
-                  </button>
-                </span>
-                {!deck.readOnly && (
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    onClick={() => handleDelete(deck)}
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
+
+          {filtered.length === 0 ? (
+            <p className={styles.empty}>
+              {decks.length === 0
+                ? "No decks yet. Create your first deck or import one to get started."
+                : "No decks match your filters."}
+            </p>
+          ) : (
+            filtered.map((deck) => (
+              <DeckRow
+                key={deck._id}
+                deck={deck}
+                onExport={handleExport}
+                onDelete={handleDelete}
+              />
+            ))
+          )}
         </section>
+
+        <aside>
+          <div className={styles.sideCard}>
+            <h3 className={styles.sideTitle}>Totals</h3>
+            <div className={styles.totals}>
+              <div className={styles.stat}>
+                <p className={styles.statLabel}>Owned</p>
+                <p className={styles.statValue}>{totals.owned}</p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.statLabel}>Assigned</p>
+                <p className={styles.statValue}>{totals.assigned}</p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.statLabel}>Decks</p>
+                <p className={styles.statValue}>{totals.decks}</p>
+              </div>
+              <div className={styles.stat}>
+                <p className={styles.statLabel}>Categories</p>
+                <p className={styles.statValue}>{totals.categories}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.sideCard}>
+            <h3 className={styles.sideTitle}>Continue studying</h3>
+            {recent.length === 0 ? (
+              <p className={styles.empty} style={{ padding: "0.4rem 0" }}>
+                No recent decks yet.
+              </p>
+            ) : (
+              recent.map((deck) => (
+                <DeckRow key={deck._id} deck={deck} variant="mini" />
+              ))
+            )}
+          </div>
+        </aside>
       </div>
 
-      <section className="card">
-        <h2>Import Deck</h2>
-        <ImportDeckForm onImported={loadDecks} />
-      </section>
+      <CreateDeckModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={loadDecks}
+      />
+      <ImportDeckModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadDecks}
+      />
       {modal}
     </Layout>
   );

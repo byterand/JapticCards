@@ -1,0 +1,58 @@
+.menu {
+  position: relative;
+  display: inline-block;
+}
+
+.menu summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #d2dae8;
+  background: white;
+  border-radius: 8px;
+  font-size: inherit;
+  font-family: inherit;
+  color: #132038;
+}
+
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu[open] summary {
+  border-color: #aab8d1;
+}
+
+.popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #d2dae8;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(15, 25, 45, 0.12);
+  padding: 0.25rem;
+  z-index: 5;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #132038;
+}
+
+.item:hover,
+.item:focus {
+  background: #eef3fb;
+  border-color: #c9d8ee;
+  outline: none;
+}

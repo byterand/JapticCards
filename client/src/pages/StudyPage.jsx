@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
 import {
   CARD_SIDES,
-  CARD_SIDE_LABELS,
+  CARD_SIDE_VALUES,
   CARD_STATUS,
   CARD_STATUS_LABELS,
   STUDY_MODES,
-  STUDY_MODE_LABELS
+  STUDY_MODE_VALUES,
+  STUDY_MODE_LABELS,
+  buildPath
 } from "../constants";
 import styles from "./StudyPage.module.css";
 
@@ -17,6 +19,10 @@ const STATUS_BUTTONS = [
   CARD_STATUS.STILL_LEARNING,
   CARD_STATUS.NEEDS_REVIEW
 ];
+
+function pick(value, allowed, fallback) {
+  return allowed.includes(value) ? value : fallback;
+}
 
 function FlipCard({ current, sideFirst, flipped, onFlip }) {
   const showFront = sideFirst === CARD_SIDES.FRONT ? !flipped : flipped;
@@ -27,44 +33,39 @@ function FlipCard({ current, sideFirst, flipped, onFlip }) {
   );
 }
 
-function MultipleChoice({ current, onAnswer }) {
+function MultipleChoice({ current, onAnswer, disabled }) {
   return (
     <div>
       <p>{current.prompt}</p>
-      {current.options.map((opt, idx) => (
-        <button
-          key={`${current.cardId}-${idx}`}
-          type="button"
-          onClick={() => onAnswer({ selectedOption: opt })}
-        >
-          {opt}
-        </button>
-      ))}
+      <div className={styles.choiceGrid}>
+        {current.options.map((opt, idx) => (
+          <button
+            key={`${current.cardId}-${idx}`}
+            type="button"
+            disabled={disabled}
+            onClick={() => onAnswer({ selectedOption: opt })}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-function TrueFalse({ current, onAnswer }) {
+function TrueFalse({ current, onAnswer, disabled }) {
   return (
     <div>
       <p>{current.statement}</p>
-      <button
-        type="button"
-        onClick={() => onAnswer({ answer: current.statement, isTrue: true })}
-      >
-        True
-      </button>
-      <button
-        type="button"
-        onClick={() => onAnswer({ answer: current.statement, isTrue: false })}
-      >
-        False
-      </button>
+      <div className={styles.choiceGrid}>
+        <button type="button" disabled={disabled} onClick={() => onAnswer({ answer: current.statement, isTrue: true })}>True</button>
+        <button type="button" disabled={disabled} onClick={() => onAnswer({ answer: current.statement, isTrue: false })}>False</button>
+      </div>
     </div>
   );
 }
 
-function WrittenAnswer({ current, typedAnswer, setTypedAnswer, onAnswer }) {
+function WrittenAnswer({ current, typedAnswer, setTypedAnswer, onAnswer, disabled }) {
   return (
     <form
       onSubmit={(e) => {
@@ -73,20 +74,19 @@ function WrittenAnswer({ current, typedAnswer, setTypedAnswer, onAnswer }) {
       }}
     >
       <p>{current.prompt}</p>
-      <input
-        value={typedAnswer}
-        onChange={(e) => setTypedAnswer(e.target.value)}
-      />
-      <button type="submit">Submit</button>
+      <input value={typedAnswer} onChange={(e) => setTypedAnswer(e.target.value)} disabled={disabled} />
+      <button type="submit" disabled={disabled}>Submit</button>
     </form>
   );
 }
 
 export default function StudyPage() {
   const { id } = useParams();
-  const [mode, setMode] = useState(STUDY_MODES.FLIP);
-  const [sideFirst, setSideFirst] = useState(CARD_SIDES.FRONT);
-  const [needsReviewOnly, setNeedsReviewOnly] = useState(false);
+  const [searchParams] = useSearchParams();
+  const mode = pick(searchParams.get("mode"), STUDY_MODE_VALUES, STUDY_MODES.FLIP);
+  const sideFirst = pick(searchParams.get("side"), CARD_SIDE_VALUES, CARD_SIDES.FRONT);
+  const needsReviewOnly = searchParams.get("review") === "1";
+
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -94,9 +94,10 @@ export default function StudyPage() {
   const [result, setResult] = useState("");
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
-  const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
+
+  const startedRef = useRef(false);
 
   const current = session?.questions?.[index];
 
@@ -107,38 +108,35 @@ export default function StudyPage() {
     setResult("");
   }, [index, session?.sessionId]);
 
-  const start = useCallback(async () => {
-    if (starting) return;
-    setError("");
-    setStarting(true);
-    try {
-      const res = await api.createSession({ deckId: id, mode, sideFirst, needsReviewOnly });
-      setSession(res);
-      setIndex(0);
-      setStats(null);
-      setSessionDone(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setStarting(false);
-    }
-  }, [starting, id, mode, sideFirst, needsReviewOnly]);
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.createSession({ deckId: id, mode, sideFirst, needsReviewOnly });
+        if (cancelled) return;
+        setSession(res);
+        setIndex(0);
+        setSessionDone(false);
+      } catch (err) {
+        if (!cancelled) setError(err.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id, mode, sideFirst, needsReviewOnly]);
 
   const submitAnswer = useCallback(async (payload) => {
     if (!session || !current || submitting || result) return;
     setSubmitting(true);
     setError("");
-
     try {
       const res = await api.answerSession(session.sessionId, {
         cardId: current.cardId,
         ...payload
       });
       setResult(res.isCorrect ? "Correct" : `Incorrect (expected: ${res.expected})`);
-
-      if (res.completed)
-        setSessionDone(true);
-
+      if (res.completed) setSessionDone(true);
       const statRes = await api.getStats(id);
       setStats(statRes);
     } catch (err) {
@@ -158,15 +156,13 @@ export default function StudyPage() {
     }
   }, [current, id]);
 
-  const toggleShuffleHandler = useCallback(async () => {
+  const toggleShuffle = useCallback(async () => {
     if (!session) return;
     setError("");
     try {
       const enabled = !session.shuffleEnabled;
       const shuffleRes = await api.toggleShuffle(session.sessionId, enabled);
-      const orderMap = new Map(
-        session.questions.map((q) => [String(q.cardId), q])
-      );
+      const orderMap = new Map(session.questions.map((q) => [String(q.cardId), q]));
       const reorderedQuestions = shuffleRes.cardOrder
         .map((cardId) => orderMap.get(String(cardId)))
         .filter(Boolean);
@@ -194,9 +190,9 @@ export default function StudyPage() {
           />
         );
       case STUDY_MODES.MULTIPLE_CHOICE:
-        return <MultipleChoice current={current} onAnswer={submitAnswer} />;
+        return <MultipleChoice current={current} onAnswer={submitAnswer} disabled={submitting || !!result} />;
       case STUDY_MODES.TRUE_FALSE:
-        return <TrueFalse current={current} onAnswer={submitAnswer} />;
+        return <TrueFalse current={current} onAnswer={submitAnswer} disabled={submitting || !!result} />;
       case STUDY_MODES.WRITTEN_ANSWER:
         return (
           <WrittenAnswer
@@ -204,6 +200,7 @@ export default function StudyPage() {
             typedAnswer={typedAnswer}
             setTypedAnswer={setTypedAnswer}
             onAnswer={submitAnswer}
+            disabled={submitting || !!result}
           />
         );
       default:
@@ -211,72 +208,51 @@ export default function StudyPage() {
     }
   };
 
+  const accuracyPct = useMemo(() => {
+    if (!stats || !stats.totalAttempts) return null;
+    return `${Math.round(stats.accuracyRate * 1000) / 10}%`;
+  }, [stats]);
+
   return (
     <Layout>
+      <div className={styles.head}>
+        <div>
+          <h2 className={styles.heading}>Study session</h2>
+          <p className={styles.subhead}>
+            {STUDY_MODE_LABELS[mode]}
+            {mode === STUDY_MODES.FLIP ? ` · ${sideFirst === CARD_SIDES.FRONT ? "front first" : "back first"}` : ""}
+            {needsReviewOnly ? " · needs review only" : ""}
+          </p>
+        </div>
+        <Link to={buildPath.deck(id)} className="btn">Back to deck</Link>
+      </div>
+
       {error && <p className="error">{error}</p>}
-      <section className="card">
-        <h2>Study Session</h2>
-        <label>
-          Mode
-          <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            {Object.values(STUDY_MODES).map((m) => (
-              <option key={m} value={m}>{STUDY_MODE_LABELS[m]}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          First side
-          <select value={sideFirst} onChange={(e) => setSideFirst(e.target.value)}>
-            {Object.values(CARD_SIDES).map((s) => (
-              <option key={s} value={s}>{CARD_SIDE_LABELS[s]}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={needsReviewOnly}
-            onChange={(e) => setNeedsReviewOnly(e.target.checked)}
-          />
-          Needs Review Only
-        </label>
-        <button type="button" onClick={start} disabled={starting}>
-          {starting ? "Starting..." : "Start Session"}
-        </button>
-      </section>
+
+      {!session && !error && <p>Starting session...</p>}
 
       {session && current && (
         <section className="card">
-          <p>Card {index + 1} of {session.questions.length}</p>
+          <p className={styles.progress}>Card {index + 1} of {session.questions.length}</p>
           {renderQuestion()}
-
-          <p>{result}</p>
+          {result && <p className={styles.result}>{result}</p>}
           <div className="actions">
-            <button
-              type="button"
-              onClick={() => setIndex((i) => Math.max(0, i - 1))}
-            >
+            <button type="button" onClick={() => setIndex((i) => Math.max(0, i - 1))}>
               Previous
             </button>
             <button
               type="button"
-              onClick={() => setIndex((i) =>
-                Math.min(session.questions.length - 1, i + 1)
-              )}
+              onClick={() => setIndex((i) => Math.min(session.questions.length - 1, i + 1))}
             >
               Next
             </button>
-            <button type="button" onClick={toggleShuffleHandler}>
+            <button type="button" onClick={toggleShuffle}>
               {session.shuffleEnabled ? "Unshuffle" : "Shuffle"}
             </button>
           </div>
           <div className="actions">
             {STATUS_BUTTONS.map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => updateCardStatus(status)}
-              >
+              <button key={status} type="button" onClick={() => updateCardStatus(status)}>
                 {CARD_STATUS_LABELS[status]}
               </button>
             ))}
@@ -286,17 +262,23 @@ export default function StudyPage() {
 
       {sessionDone && (
         <section className="card">
-          <h3>Session Complete</h3>
+          <h3>Session complete</h3>
           <p>You've answered every card in this session.</p>
+          <div className="actions">
+            <Link to={buildPath.deck(id)} className="btn">Back to deck</Link>
+            <Link to={buildPath.study(id)} className="btn btn-primary" reloadDocument>
+              Study again
+            </Link>
+          </div>
         </section>
       )}
 
       {stats && (
         <section className="card">
           <h3>Stats</h3>
-          <p>Cards Studied: {stats.cardsStudied}</p>
-          <p>Total Attempts: {stats.totalAttempts}</p>
-          <p>Accuracy: {(stats.accuracyRate * 100).toFixed(1)}%</p>
+          <p>Cards studied: {stats.cardsStudied}</p>
+          <p>Total attempts: {stats.totalAttempts}</p>
+          {accuracyPct !== null && <p>Accuracy: {accuracyPct}</p>}
         </section>
       )}
     </Layout>

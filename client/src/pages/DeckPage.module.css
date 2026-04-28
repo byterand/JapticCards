@@ -1,0 +1,128 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+.headerCard {
+  margin-bottom: 1rem;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.titleBlock h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.4rem;
+}
+
+.tagline {
+  margin: 0;
+  color: #5a6478;
+}
+
+.metaRow {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.pill {
+  font-size: 0.78rem;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #eef3fb;
+  color: #1a4c9c;
+}
+
+.pill.muted {
+  background: #f0f2f7;
+  color: #5a6478;
+}
+
+.editForm {
+  margin-top: 0.85rem;
+  border-top: 1px solid #e4e9f2;
+  padding-top: 0.85rem;
+}
+
+.setupRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .setupRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setupRow select {
+  margin: 0;
+}
+
+.checkboxField {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+}
+
+.checkboxField input {
+  width: auto;
+  margin: 0;
+}
+
+.startRow {
+  margin-top: 0.85rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.stat {
+  background: #fff;
+  border: 1px solid #e4e9f2;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+}
+
+.statLabel {
+  font-size: 0.72rem;
+  color: #5a6478;
+  margin: 0;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0.1rem 0 0;
+  color: #132038;
+}
+
+.cardCount {
+  color: #5a6478;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin-left: 0.4rem;
+}
