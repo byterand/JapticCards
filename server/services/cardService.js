@@ -4,7 +4,7 @@ import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { HttpError } from '../utils/HttpError.js';
 import { deleteManagedImage, deleteManagedImagesForCard } from '../utils/cardImages.js';
-import { runInTransaction } from '../utils/transaction.js';
+import { withTransaction } from '../utils/transaction.js';
 
 const CARD_UPDATABLE_FIELDS = ['front', 'back', 'frontImage', 'backImage'];
 const IMAGE_FIELDS = new Set(['frontImage', 'backImage']);
@@ -80,10 +80,9 @@ export async function deleteCard(user, deckId, cardId) {
   // Authorize first
   await requireWritableDeck(user, deckId);
   const card = await findCardInDeck(cardId, deckId);
-  await runInTransaction(async (session) => {
-    const opts = session ? { session } : {};
-    await CardProgress.deleteMany({ card: card._id }, opts);
-    await Card.deleteOne({ _id: card._id }, opts);
+  await withTransaction(async (session) => {
+    await CardProgress.deleteMany({ card: card._id }, { session });
+    await Card.deleteOne({ _id: card._id }, { session });
   });
   await Promise.allSettled([deleteManagedImagesForCard(card)]);
 }

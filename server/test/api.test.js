@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import supertest from 'supertest';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 let mongod;
 let app;
@@ -17,7 +17,7 @@ async function registerAndLogin(username, password, role = 'student') {
 test.before(async () => {
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test-secret';
-  mongod = await MongoMemoryServer.create();
+  mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   process.env.MONGO_URI = mongod.getUri();
   ({ default: app } = await import('../app.js'));
   await mongoose.connect(process.env.MONGO_URI);

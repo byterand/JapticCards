@@ -41,9 +41,7 @@ CLIENT_ORIGIN=http://localhost:3000
 VITE_API_URL=http://localhost:5000
 ```
 
-Make sure MongoDB is running locally. Atlas works too if you point `MONGO_URI` at it.
-
----
+Make sure MongoDB is running locally. Atlas works too if you point `MONGO_URI` at it. Ensure that it has a replica set.
 
 ## Running
 
