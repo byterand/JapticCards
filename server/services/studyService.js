@@ -6,8 +6,7 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { HttpError } from '../utils/HttpError.js';
 import { STUDY_MODES, CARD_STATUS, CARD_SIDES } from '../utils/constants.js';
 
-const MC_OPTION_COUNT = 4;
-const MC_DISTRACTOR_COUNT = MC_OPTION_COUNT - 1;
+const MC_MAX_DISTRACTORS = 3;
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -25,11 +24,8 @@ function buildMultipleChoiceQuestion(card, cards) {
   const distractors = cards
     .filter((c) => !sameId(c._id, card._id) && c.back && c.back !== card.back)
     .map((c) => c.back);
-  const uniqueDistractors = [...new Set(distractors)].slice(0, MC_DISTRACTOR_COUNT);
-  while (uniqueDistractors.length < MC_DISTRACTOR_COUNT) {
-    uniqueDistractors.push(`${card.back} (alt ${uniqueDistractors.length + 1})`);
-  }
-  const options = shuffleArray([card.back, ...uniqueDistractors]).slice(0, MC_OPTION_COUNT);
+  const uniqueDistractors = shuffleArray([...new Set(distractors)]).slice(0, MC_MAX_DISTRACTORS);
+  const options = shuffleArray([card.back, ...uniqueDistractors]);
   return { prompt: card.front, options, correctAnswer: card.back };
 }
 

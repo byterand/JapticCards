@@ -15,7 +15,6 @@ import {
   EXPORT_FORMAT_VALUES
 } from '../utils/constants.js';
 
-const TAG_SEPARATOR = '|';
 const CSV_COLUMNS = [
   'deckTitle',
   'deckDescription',
@@ -28,6 +27,18 @@ const CSV_COLUMNS = [
 ];
 
 const DECK_UPDATABLE_FIELDS = ['title', 'description', 'category', 'tags'];
+
+function parseDeckTagsCell(cell) {
+  const raw = (cell || '').trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter((t) => typeof t === 'string');
+  } catch {
+    // fall through
+  }
+  return [raw];
+}
 
 function normalizeTags(tags) {
   if (!Array.isArray(tags)) return [];
@@ -145,7 +156,7 @@ const EXPORT_SERIALIZERS = {
       deckTitle: payload.title,
       deckDescription: payload.description,
       deckCategory: payload.category,
-      deckTags: Array.isArray(payload.tags) ? payload.tags.join(TAG_SEPARATOR) : '',
+      deckTags: Array.isArray(payload.tags) && payload.tags.length ? JSON.stringify(payload.tags) : '',
       front: card.front,
       back: card.back,
       frontImage: card.frontImage,
@@ -196,10 +207,7 @@ const IMPORT_PARSERS = {
     if (!rows.length) {
       throw new HttpError(400, 'CSV must include at least one card row');
     }
-    const tags = (rows[0].deckTags || '')
-      .split(TAG_SEPARATOR)
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const tags = parseDeckTagsCell(rows[0].deckTags);
     return {
       title: rows[0].deckTitle || 'Imported Deck',
       description: rows[0].deckDescription || '',
@@ -231,14 +239,19 @@ export async function importDeck(userId, { format, content }) {
     throw new HttpError(400, 'Invalid file content. Could not parse.');
   }
 
-  if (!data?.title || !Array.isArray(data.cards) || data.cards.length === 0) {
+  if (!data?.title?.trim() || !Array.isArray(data.cards) || data.cards.length === 0) {
     throw new HttpError(400, 'Imported file must include deck title and at least one card.');
   }
-  if (data.cards.some((card) => !card.front || !card.back)) {
+  const trimmedCards = data.cards.map((card) => ({
+    ...card,
+    front: typeof card.front === 'string' ? card.front.trim() : '',
+    back: typeof card.back === 'string' ? card.back.trim() : ''
+  }));
+  if (trimmedCards.some((card) => !card.front || !card.back)) {
     throw new HttpError(400, 'Each imported card must include front and back text.');
   }
 
-  const cardDocs = await Promise.all(data.cards.map(async (card, index) => ({
+  const cardDocs = await Promise.all(trimmedCards.map(async (card, index) => ({
     owner: userId,
     front: card.front,
     back: card.back,
@@ -250,7 +263,7 @@ export async function importDeck(userId, { format, content }) {
   const deckId = await withTransaction(async (session) => {
     const [deck] = await Deck.create([{
       owner: userId,
-      title: data.title,
+      title: data.title.trim(),
       description: data.description || '',
       category: data.category || '',
       tags: normalizeTags(data.tags),
