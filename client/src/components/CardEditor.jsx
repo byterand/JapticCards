@@ -5,7 +5,7 @@ import EditCardModal from "./EditCardModal";
 import { CARD_SIDES } from "../constants";
 import styles from "./CardEditor.module.css";
 
-export default function CardEditor({ card, deckId, readOnly, onSaved, onError }) {
+export default function CardEditor({ card, deckId, onSaved, onError }) {
   const { confirm, modal } = useConfirm();
   const [flipped, setFlipped] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -40,28 +40,26 @@ export default function CardEditor({ card, deckId, readOnly, onSaved, onError })
 
   return (
     <article className={styles.scene}>
-      {!readOnly && (
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            aria-label={`Edit ${currentSide}`}
-            title={`Edit ${currentSide}`}
-            onClick={handleEdit}
-          >
-            ✎
-          </button>
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${styles.danger}`}
-            aria-label="Delete card"
-            title="Delete card"
-            onClick={handleDelete}
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          aria-label={`Edit ${currentSide}`}
+          title={`Edit ${currentSide}`}
+          onClick={handleEdit}
+        >
+          ✎
+        </button>
+        <button
+          type="button"
+          className={`${styles.iconBtn} ${styles.danger}`}
+          aria-label="Delete card"
+          title="Delete card"
+          onClick={handleDelete}
+        >
+          ✕
+        </button>
+      </div>
       <button
         type="button"
         className={`${styles.card} ${flipped ? styles.flipped : ""}`}
@@ -85,16 +83,14 @@ export default function CardEditor({ card, deckId, readOnly, onSaved, onError })
           <span className={styles.flipHint}>Click to flip</span>
         </div>
       </button>
-      {!readOnly && (
-        <EditCardModal
-          open={editOpen}
-          card={card}
-          side={currentSide}
-          deckId={deckId}
-          onClose={() => setEditOpen(false)}
-          onSaved={onSaved}
-        />
-      )}
+      <EditCardModal
+        open={editOpen}
+        card={card}
+        side={currentSide}
+        deckId={deckId}
+        onClose={() => setEditOpen(false)}
+        onSaved={onSaved}
+      />
       {modal}
     </article>
   );

@@ -22,18 +22,6 @@ export const CARD_STATUS = {
 
 export const CARD_STATUS_VALUES = Object.values(CARD_STATUS);
 
-export const USER_ROLES = {
-  STUDENT: 'student',
-  TEACHER: 'teacher'
-};
-
-export const USER_ROLE_VALUES = Object.values(USER_ROLES);
-
-export const ACCESS_LEVELS = {
-  OWNER: 'owner',
-  ASSIGNED: 'assigned'
-};
-
 export const EXPORT_FORMATS = {
   JSON: 'json',
   CSV: 'csv'

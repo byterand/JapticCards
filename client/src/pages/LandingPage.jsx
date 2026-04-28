@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
-import { ROUTES, USER_ROLES } from "../constants";
+import { ROUTES } from "../constants";
 import styles from "./LandingPage.module.css";
 
 const FEATURES = [
@@ -18,8 +18,8 @@ const FEATURES = [
     body: "Per-card status and per-deck stats show what you know, what's still learning, and what needs review."
   },
   {
-    title: "Teacher tools",
-    body: "Teachers can author decks once and assign them to any number of students with read-only access."
+    title: "Share via export",
+    body: "Export any deck to JSON or CSV and import it into another account."
   }
 ];
 
@@ -35,16 +35,9 @@ export default function LandingPage() {
         </p>
         <div className={styles.heroActions}>
           {loading ? null : user ? (
-            <>
-              <Link className="btn btn-primary" to={ROUTES.DASHBOARD}>
-                Go to dashboard
-              </Link>
-              {user.role === USER_ROLES.TEACHER && (
-                <Link className="btn" to={ROUTES.TEACHER}>
-                  Teacher tools
-                </Link>
-              )}
-            </>
+            <Link className="btn btn-primary" to={ROUTES.DASHBOARD}>
+              Go to dashboard
+            </Link>
           ) : (
             <>
               <Link className="btn btn-primary" to={ROUTES.REGISTER}>
@@ -73,8 +66,8 @@ export default function LandingPage() {
       <section className={styles.landingSection}>
         <h3 className={styles.sectionTitle}>How it works</h3>
         <ol className={styles.steps}>
-          <li>Sign up as a student or teacher.</li>
-          <li>Build a deck — or, as a student, study one assigned to you.</li>
+          <li>Sign up with a username and password.</li>
+          <li>Build a deck, or import one someone shared with you as a JSON or CSV file.</li>
           <li>Pick a study mode and run a session; the server records what you got right and wrong.</li>
           <li>Check stats to see which cards still need work.</li>
         </ol>

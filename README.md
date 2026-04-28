@@ -4,7 +4,7 @@
 
 ---
 
-A full-stack flashcard platform. Students study decks created by teachers (or their own). teachers create decks and assign them to students; everyone tracks per-card progress across multiple study modes.
+A full-stack flashcard platform. Each user builds and studies their own decks, and decks can be shared between accounts via JSON or CSV export/import. Per-card progress is tracked across multiple study modes.
 
 The repo is an npm workspace: a single `npm install` at the root installs the server and client, and a single `npm run dev` starts both.
 
@@ -12,7 +12,7 @@ The repo is an npm workspace: a single `npm install` at the root installs the se
 
 ## Overview
 
-The app is split into a Node/Express API backed by MongoDB and a React client built with Vite. Authentication uses short-lived JWT access tokens carried in the `Authorization` header plus a long-lived refresh token delivered as an httpOnly cookie that's rotated on every refresh. Two roles exist: **student** (default) and **teacher**. Teachers can create decks and assign them to students; assigned students see those decks read-only on their dashboard alongside their own.
+The app is split into a Node/Express API backed by MongoDB and a React client built with Vite. Authentication uses short-lived JWT access tokens carried in the `Authorization` header plus a long-lived refresh token delivered as an httpOnly cookie that's rotated on every refresh. Every account is equal: any user can create decks, and a deck is fully owned by its creator. Sharing a deck with another user is done by exporting it (JSON or CSV) and importing it into the other account.
 
 A "deck" is a titled, optionally categorized/tagged collection of cards, where each card has a front and a back plus optional images. A "study session" is a snapshot of a deck (or its needs-review subset) frozen into a question list at creation time so grading is deterministic and tamper-resistant on the server. Four study modes are supported: classic card flip, multiple choice, true/false, and written answer.
 
@@ -105,16 +105,15 @@ The server tests start up an in-memory MongoDB via `mongodb-memory-server` so no
 - JWT access tokens (15 min TTL, `Authorization: Bearer …`).
 - Refresh tokens (7 day TTL) delivered as httpOnly, SameSite=strict cookies on the `/auth` path; rotated atomically on every refresh.
 
-**Roles & access control**
-- `student` and `teacher` roles set at registration.
-- Teacher-only endpoints under `/teacher` enforced by middleware.
-- Per-deck access resolution: owner gets full read/write, assigned students get read-only, everyone else gets a 404.
+**Access control**
+- Decks are owner-only: the creator gets full read/write; everyone else gets a 404.
+- Cross-account sharing is done by exporting the deck and re-importing it into another account.
 
 **Decks**
 - CRUD with title, description, category, and tags.
 - Search and category filter on the dashboard.
-- JSON and CSV import/export.
-- Soft cascade on deletion.
+- JSON and CSV import/export — the primary mechanism for sharing decks between accounts.
+- Cascade on deletion (cards, per-user progress, study sessions).
 
 **Cards**
 - CRUD with front/back text and optional front/back images.
@@ -128,12 +127,6 @@ The server tests start up an in-memory MongoDB via `mongodb-memory-server` so no
 - "Needs review only" filter to drill on cards the user has flagged.
 - Server persists each question's options/correct answer at session creation, so grading is server-authoritative.
 - Shuffle toggle that reorders the active card list without losing the original order.
-
-**Teacher workflow**
-- List all students.
-- Assign one deck to one or more students at once.
-- Revoke an assignment.
-- View current assignments grouped by deck.
 
 **Statistics**
 - Per-deck summary: cards studied, total correct/incorrect, accuracy rate.

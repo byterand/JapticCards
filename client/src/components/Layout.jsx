@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { ROUTES, USER_ROLES } from "../constants";
+import { ROUTES } from "../constants";
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
@@ -20,9 +20,6 @@ export default function Layout({ children }) {
         <nav>
           {user ? (
             <>
-              {user.role === USER_ROLES.TEACHER && (
-                <Link to={ROUTES.TEACHER} className="btn">Teacher</Link>
-              )}
               <button
                 type="button"
                 className="btn"

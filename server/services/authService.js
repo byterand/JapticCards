@@ -17,13 +17,13 @@ function hashToken(token) {
 }
 
 function publicUser(user) {
-  return { id: user._id, username: user.username, role: user.role };
+  return { id: user._id, username: user.username };
 }
 
 function signAccessToken(user) {
   const jti = crypto.randomUUID();
   const token = jwt.sign(
-    { userId: user._id, role: user.role },
+    { userId: user._id },
     config.jwtSecret,
     jwtSignOptions({ expiresIn: config.jwt.accessTtlSeconds, jwtid: jti })
   );
@@ -69,11 +69,11 @@ async function revokeFamily(family) {
   );
 }
 
-export async function registerUser({ username, password, role }) {
+export async function registerUser({ username, password }) {
   const existing = await User.findOne({ username });
   if (existing) throw new HttpError(409, 'Username is taken');
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
-  const user = await User.create({ username, password: hashed, role });
+  const user = await User.create({ username, password: hashed });
   return { userId: user._id };
 }
 
@@ -158,7 +158,7 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
 }
 
 export async function getCurrentUser(userId) {
-  const user = await User.findById(userId).select('_id username role');
+  const user = await User.findById(userId).select('_id username');
   if (!user) throw new HttpError(404, 'User not found');
   return publicUser(user);
 }

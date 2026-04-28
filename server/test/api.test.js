@@ -8,8 +8,8 @@ let mongod;
 let app;
 let request;
 
-async function registerAndLogin(username, password, role = 'student') {
-  await request.post('/auth/register').send({ username, password, role });
+async function registerAndLogin(username, password) {
+  await request.post('/auth/register').send({ username, password });
   const loginRes = await request.post('/auth/login').send({ username, password });
   return loginRes.body.token;
 }
@@ -33,10 +33,10 @@ test('auth register/login/me/logout invalidation flow', async () => {
   const username = 'student_one';
   const password = 'Password1!';
 
-  const reg = await request.post('/auth/register').send({ username, password, role: 'student' });
+  const reg = await request.post('/auth/register').send({ username, password });
   assert.equal(reg.status, 201);
 
-  const dup = await request.post('/auth/register').send({ username, password, role: 'student' });
+  const dup = await request.post('/auth/register').send({ username, password });
   assert.equal(dup.status, 409);
 
   const login = await request.post('/auth/login').send({ username, password });
@@ -56,7 +56,7 @@ test('auth register/login/me/logout invalidation flow', async () => {
 });
 
 test('deck/card CRUD and study basics', async () => {
-  const token = await registerAndLogin('teacher_one', 'Password1!', 'teacher');
+  const token = await registerAndLogin('owner_one', 'Password1!');
   const auth = { Authorization: `Bearer ${token}` };
 
   const createdDeck = await request.post('/decks').set(auth).send({
@@ -106,33 +106,24 @@ test('deck/card CRUD and study basics', async () => {
   assert.equal(deletedDeck.status, 200);
 });
 
-test('teacher assignment enforces student read-only access', async () => {
-  const teacherToken = await registerAndLogin('teacher_two', 'Password1!', 'teacher');
-  const studentToken = await registerAndLogin('student_two', 'Password1!', 'student');
-  const teacherAuth = { Authorization: `Bearer ${teacherToken}` };
-  const studentAuth = { Authorization: `Bearer ${studentToken}` };
+test('non-owner cannot read or modify another user\'s deck', async () => {
+  const ownerToken = await registerAndLogin('owner_two', 'Password1!');
+  const otherToken = await registerAndLogin('other_two', 'Password1!');
+  const ownerAuth = { Authorization: `Bearer ${ownerToken}` };
+  const otherAuth = { Authorization: `Bearer ${otherToken}` };
 
-  const deck = await request.post('/decks').set(teacherAuth).send({ title: 'Math' });
+  const deck = await request.post('/decks').set(ownerAuth).send({ title: 'Math' });
   const deckId = deck.body._id;
 
-  const students = await request.get('/teacher/students').set(teacherAuth);
-  const studentId = students.body.find((s) => s.username === 'student_two')._id;
-  const assign = await request.post('/teacher/assignments').set(teacherAuth).send({
-    deckId,
-    studentIds: [studentId]
-  });
-  assert.equal(assign.status, 201);
+  const fetched = await request.get(`/decks/${deckId}`).set(otherAuth);
+  assert.equal(fetched.status, 404);
 
-  const assignedDeck = await request.get(`/decks/${deckId}`).set(studentAuth);
-  assert.equal(assignedDeck.status, 200);
-  assert.equal(assignedDeck.body.readOnly, true);
-
-  const deniedEdit = await request.patch(`/decks/${deckId}`).set(studentAuth).send({ title: 'Try Edit' });
-  assert.equal(deniedEdit.status, 403);
+  const deniedEdit = await request.patch(`/decks/${deckId}`).set(otherAuth).send({ title: 'Try Edit' });
+  assert.equal(deniedEdit.status, 404);
 });
 
 test('deck import and export support json and csv', async () => {
-  const token = await registerAndLogin('import_user', 'Password1!', 'student');
+  const token = await registerAndLogin('import_user', 'Password1!');
   const auth = { Authorization: `Bearer ${token}` };
 
   const importPayload = {
@@ -159,4 +150,4 @@ test('deck import and export support json and csv', async () => {
   const exportedCsv = await request.get(`/decks/${deckId}/export?format=csv`).set(auth);
   assert.equal(exportedCsv.status, 200);
   assert.ok(exportedCsv.text.includes('deckTitle'));
-});
+})

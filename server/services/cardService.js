@@ -12,7 +12,6 @@ const IMAGE_FIELDS = new Set(['frontImage', 'backImage']);
 async function requireWritableDeck(user, deckId) {
   const access = await getAccessibleDeckLean(user, deckId);
   if (!access) throw new HttpError(404, 'Deck not found');
-  if (access.readOnly) throw new HttpError(403, 'Assigned decks are read-only for students');
   return access;
 }
 

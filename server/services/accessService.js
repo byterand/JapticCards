@@ -1,18 +1,10 @@
 import Deck from '../models/Deck.js';
-import Assignment from '../models/Assignment.js';
 
-// Resolves access given an already-loaded deck (hydrated doc or POJO).
-async function resolveAccess(user, deck) {
+// Owner-only access: returns the deck if the user owns it, null otherwise.
+function resolveAccess(user, deck) {
   if (!deck) return null;
-  if (String(deck.owner) === String(user.userId)) {
-    return { deck, readOnly: false };
-  }
-  const assignment = await Assignment.findOne({
-    deck: deck._id,
-    student: user.userId
-  }).select('_id').lean();
-  if (!assignment) return null;
-  return { deck, readOnly: true };
+  if (String(deck.owner) !== String(user.userId)) return null;
+  return { deck };
 }
 
 // Loads a live Mongoose deck doc. Use on write paths that may mutate and save the deck

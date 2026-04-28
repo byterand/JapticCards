@@ -32,7 +32,6 @@ export default function DeckRow({
     const n = deck.cards.length;
     metaParts.push(`${n} card${n === 1 ? "" : "s"}`);
   }
-  if (deck.readOnly) metaParts.push("read-only");
   if (isMini) {
     const updated = formatRelative(deck.updatedAt);
     if (updated) metaParts.push(`updated ${updated}`);
@@ -46,7 +45,6 @@ export default function DeckRow({
             {deck.title}
           </Link>
           {deck.category && <span className={styles.pill}>{deck.category}</span>}
-          {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned</span>}
         </div>
         {!isMini && deck.description && (
           <p className={styles.description}>{deck.description}</p>
@@ -66,7 +64,7 @@ export default function DeckRow({
             onExport={(format) => onExport(deck, format)}
           />
         )}
-        {!isMini && !deck.readOnly && onDelete && (
+        {!isMini && onDelete && (
           <button
             type="button"
             className={`btn-danger ${styles.iconBtn}`}

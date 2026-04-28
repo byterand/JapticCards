@@ -1,6 +1,5 @@
 import Deck from '../models/Deck.js';
 import Card from '../models/Card.js';
-import Assignment from '../models/Assignment.js';
 import CardProgress from '../models/CardProgress.js';
 import StudySession from '../models/StudySession.js';
 import { getAccessibleDeck, getAccessibleDeckLean } from './accessService.js';
@@ -9,7 +8,6 @@ import { HttpError } from '../utils/HttpError.js';
 import { withTransaction } from '../utils/transaction.js';
 import { deleteManagedImagesForCard, inlineManagedImage, persistInlineImage } from '../utils/cardImages.js';
 import {
-  ACCESS_LEVELS,
   CONTENT_TYPES,
   EXPORT_FORMATS,
   EXPORT_FORMAT_VALUES
@@ -54,25 +52,8 @@ function normalizeTags(tags) {
   return out;
 }
 
-function deckResponseFlags(isOwner) {
-  return {
-    readOnly: !isOwner,
-    access: isOwner ? ACCESS_LEVELS.OWNER : ACCESS_LEVELS.ASSIGNED
-  };
-}
-
 export async function listUserDecks(userId) {
-  const assignments = await Assignment.find({ student: userId }).select('deck');
-  const assignedDeckIds = assignments.map((a) => a.deck);
-
-  const decks = await Deck.find({
-    $or: [{ owner: userId }, { _id: { $in: assignedDeckIds } }]
-  }).lean();
-
-  return decks.map((deck) => ({
-    ...deck,
-    ...deckResponseFlags(String(deck.owner) === String(userId))
-  }));
+  return Deck.find({ owner: userId }).lean();
 }
 
 export async function createDeck(userId, payload) {
@@ -100,8 +81,7 @@ export async function getDeckWithCards(user, deckId) {
     tags,
     createdAt,
     updatedAt,
-    cards,
-    ...deckResponseFlags(!access.readOnly)
+    cards
   };
 }
 
@@ -109,9 +89,6 @@ export async function updateDeck(user, deckId, updates) {
   const access = await getAccessibleDeck(user, deckId);
   if (!access) {
     throw new HttpError(404, 'Deck not found');
-  }
-  if (access.readOnly) {
-    throw new HttpError(403, 'Assigned decks are read-only for students');
   }
   if (updates.tags !== undefined) {
     updates = { ...updates, tags: normalizeTags(updates.tags) };
@@ -128,16 +105,12 @@ export async function deleteDeck(user, deckId) {
   if (!access) {
     throw new HttpError(404, 'Deck not found');
   }
-  if (access.readOnly) {
-    throw new HttpError(403, 'Assigned decks are read-only for students');
-  }
   // Fetch the image paths before deleting so we can sweep the files afterward.
   const cards = await Card.find({ deck: access.deck._id }).select('_id frontImage backImage');
   const cardIds = cards.map((card) => card._id);
   await withTransaction(async (session) => {
     await Card.deleteMany({ deck: access.deck._id }, { session });
     await CardProgress.deleteMany({ card: { $in: cardIds } }, { session });
-    await Assignment.deleteMany({ deck: access.deck._id }, { session });
     await StudySession.deleteMany({ deck: access.deck._id }, { session });
     await Deck.deleteOne({ _id: access.deck._id }, { session });
   });

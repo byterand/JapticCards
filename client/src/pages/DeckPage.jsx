@@ -135,7 +135,6 @@ export default function DeckPage() {
               <h2>{deck.title}</h2>
               <div className={styles.pillRow}>
                 {deck.category && <span className={styles.pill}>{deck.category}</span>}
-                {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned · read-only</span>}
                 {Array.isArray(deck.tags) && deck.tags.map((t) => (
                   <span key={t} className={`${styles.pill} ${styles.muted}`}>{t.toLowerCase()}</span>
                 ))}
@@ -144,17 +143,13 @@ export default function DeckPage() {
             {deck.description && <p className={styles.tagline}>{deck.description}</p>}
           </div>
           <div className="actions">
-            {!deck.readOnly && (
-              <button type="button" className="btn" onClick={() => setEditDeckOpen(true)}>
-                Edit
-              </button>
-            )}
+            <button type="button" className="btn" onClick={() => setEditDeckOpen(true)}>
+              Edit
+            </button>
             <ExportMenu onExport={handleExport} />
-            {!deck.readOnly && (
-              <button type="button" className="btn btn-danger" onClick={handleDelete}>
-                Delete
-              </button>
-            )}
+            <button type="button" className="btn btn-danger" onClick={handleDelete}>
+              Delete
+            </button>
           </div>
         </div>
       </section>
@@ -245,11 +240,9 @@ export default function DeckPage() {
           <h3>
             Cards<span className={styles.cardCount}>{cardCount} total</span>
           </h3>
-          {!deck.readOnly && (
-            <button type="button" className="btn btn-primary" onClick={() => setAddCardOpen(true)}>
-              Add card
-            </button>
-          )}
+          <button type="button" className="btn btn-primary" onClick={() => setAddCardOpen(true)}>
+            Add card
+          </button>
         </div>
         {cardCount === 0 ? (
           <p>No cards yet.</p>
@@ -260,7 +253,6 @@ export default function DeckPage() {
                 key={card._id}
                 card={card}
                 deckId={deck._id}
-                readOnly={deck.readOnly}
                 onSaved={handleCardChanged}
                 onError={setError}
               />
@@ -269,22 +261,18 @@ export default function DeckPage() {
         )}
       </section>
 
-      {!deck.readOnly && (
-        <>
-          <EditDeckModal
-            open={editDeckOpen}
-            deck={deck}
-            onClose={() => setEditDeckOpen(false)}
-            onSaved={loadDeck}
-          />
-          <AddCardModal
-            open={addCardOpen}
-            deckId={deck._id}
-            onClose={() => setAddCardOpen(false)}
-            onAdded={handleCardChanged}
-          />
-        </>
-      )}
+      <EditDeckModal
+        open={editDeckOpen}
+        deck={deck}
+        onClose={() => setEditDeckOpen(false)}
+        onSaved={loadDeck}
+      />
+      <AddCardModal
+        open={addCardOpen}
+        deckId={deck._id}
+        onClose={() => setAddCardOpen(false)}
+        onAdded={handleCardChanged}
+      />
       {modal}
     </Layout>
   );

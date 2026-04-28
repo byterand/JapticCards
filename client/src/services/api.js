@@ -162,13 +162,6 @@ export const api = {
     return jsonRequest(`/decks/${deckId}/cards/${cardId}/status`, "PATCH", { status });
   },
   getStats(deckId) { return request(`/decks/${deckId}/stats`); },
-  getStudents() { return request("/teacher/students"); },
-  getAssignments(deckId) {
-    const suffix = deckId ? `?deckId=${deckId}` : "";
-    return request(`/teacher/assignments${suffix}`);
-  },
-  assignDeck(payload) { return jsonRequest("/teacher/assignments", "POST", payload); },
-  revokeAssignment(id) { return jsonRequest(`/teacher/assignments/${id}`, "DELETE"); },
   async exportDeck(id, format) {
     const res = await doFetch(`/decks/${id}/export?format=${format}`, { method: "GET" });
     if (!res.ok) {

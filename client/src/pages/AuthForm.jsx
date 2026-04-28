@@ -1,21 +1,8 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { ROUTES, USER_ROLES } from "../constants";
+import { ROUTES } from "../constants";
 import styles from "./AuthForm.module.css";
-
-const ROLE_OPTIONS = [
-  {
-    value: USER_ROLES.STUDENT,
-    label: "Student",
-    description: "Build your own decks or study decks assigned by a teacher."
-  },
-  {
-    value: USER_ROLES.TEACHER,
-    label: "Teacher",
-    description: "Build decks and assign them to students for class use."
-  }
-];
 
 export default function AuthForm({ registerMode = false }) {
   const { user, login, register } = useAuth();
@@ -24,7 +11,6 @@ export default function AuthForm({ registerMode = false }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState(USER_ROLES.STUDENT);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
@@ -49,7 +35,7 @@ export default function AuthForm({ registerMode = false }) {
     let registered = false;
     try {
       if (registerMode) {
-        await register({ username, password, role });
+        await register({ username, password });
         registered = true;
       }
       await login(username, password);
@@ -134,30 +120,6 @@ export default function AuthForm({ registerMode = false }) {
                 required
               />
             </label>
-          )}
-
-          {registerMode && (
-            <fieldset className={styles.roleFieldset}>
-              <legend className={styles.roleLegend}>Role</legend>
-              <div className={styles.roleCards}>
-                {ROLE_OPTIONS.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`${styles.roleCard}${role === opt.value ? ` ${styles.isSelected}` : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      name="role"
-                      value={opt.value}
-                      checked={role === opt.value}
-                      onChange={() => setRole(opt.value)}
-                    />
-                    <span className={styles.roleCardLabel}>{opt.label}</span>
-                    <span className={styles.roleCardDescription}>{opt.description}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
           )}
 
           <button type="submit" className={`btn btn-primary ${styles.authSubmit}`}>

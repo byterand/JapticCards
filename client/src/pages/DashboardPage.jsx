@@ -82,9 +82,7 @@ export default function DashboardPage() {
   );
 
   const totals = useMemo(() => {
-    const owned = decks.filter((d) => !d.readOnly).length;
-    const assigned = decks.length - owned;
-    return { owned, assigned, decks: decks.length, categories: categories.length };
+    return { decks: decks.length, categories: categories.length };
   }, [decks, categories]);
 
   const recent = useMemo(
@@ -161,14 +159,6 @@ export default function DashboardPage() {
           <div className={styles.sideCard}>
             <h3 className={styles.sideTitle}>Totals</h3>
             <div className={styles.totals}>
-              <div className={styles.stat}>
-                <p className={styles.statLabel}>Owned</p>
-                <p className={styles.statValue}>{totals.owned}</p>
-              </div>
-              <div className={styles.stat}>
-                <p className={styles.statLabel}>Assigned</p>
-                <p className={styles.statValue}>{totals.assigned}</p>
-              </div>
               <div className={styles.stat}>
                 <p className={styles.statLabel}>Decks</p>
                 <p className={styles.statValue}>{totals.decks}</p>

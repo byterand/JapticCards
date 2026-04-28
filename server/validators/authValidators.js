@@ -1,5 +1,4 @@
 import { body } from 'express-validator';
-import { USER_ROLE_VALUES } from '../utils/constants.js';
 
 export const registerRules = [
   body('username')
@@ -15,10 +14,7 @@ export const registerRules = [
     .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
     .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
     .matches(/[0-9]/).withMessage('Password must contain at least one number')
-    .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain at least one special character'),
-  body('role')
-    .optional()
-    .isIn(USER_ROLE_VALUES).withMessage('Role must be student or teacher')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Password must contain at least one special character')
 ];
 
 export const loginRules = [

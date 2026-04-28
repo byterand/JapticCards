@@ -31,8 +31,8 @@ function readRefreshToken(req) {
 }
 
 router.post('/register', registerRules, validate, async (req, res) => {
-  const { username, password, role } = req.body;
-  const { userId } = await authService.registerUser({ username, password, role });
+  const { username, password } = req.body;
+  const { userId } = await authService.registerUser({ username, password });
   return res.status(201).json({ message: 'User registered', userId });
 });
 

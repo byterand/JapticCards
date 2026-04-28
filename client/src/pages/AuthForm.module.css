@@ -73,64 +73,6 @@
   border-color: #c9d8ee;
 }
 
-.roleFieldset {
-  border: none;
-  padding: 0;
-  margin: 0 0 0.85rem;
-}
-
-.roleLegend {
-  padding: 0;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-}
-
-.roleCards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
-.roleCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid #d2dae8;
-  border-radius: 10px;
-  cursor: pointer;
-  background: #fff;
-}
-
-.roleCard:hover {
-  border-color: #aab8d1;
-}
-
-.roleCard.isSelected {
-  border-color: #1a4c9c;
-  background: #eef3fb;
-  box-shadow: 0 0 0 1px #1a4c9c inset;
-}
-
-.roleCard input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  margin: 0;
-}
-
-.roleCardLabel {
-  font-weight: 600;
-}
-
-.roleCardDescription {
-  font-size: 0.85rem;
-  color: #2c3a55;
-  line-height: 1.35;
-}
-
 .authSubmit {
   width: 100%;
   padding: 0.7rem;

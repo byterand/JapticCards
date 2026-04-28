@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES } from "../constants";
 
-export default function ProtectedRoute({ children, role }) {
+export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) {
@@ -10,9 +10,6 @@ export default function ProtectedRoute({ children, role }) {
   }
   if (!user) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
-  }
-  if (role && user.role !== role) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
   return children;
 }
