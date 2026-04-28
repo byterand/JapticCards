@@ -47,10 +47,20 @@
   color: #37404f;
 }
 
+.description {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  color: #2c3a55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .meta {
   font-size: 0.78rem;
   color: #5a6478;
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
 }
 
 .actions {

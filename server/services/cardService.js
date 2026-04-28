@@ -36,7 +36,7 @@ async function reserveNextOrder(deckId) {
   const reserved = await Deck.findOneAndUpdate(
     { _id: deckId },
     { $inc: { cardCounter: 1 } },
-    { new: true, projection: { cardCounter: 1 } }
+    { returnDocument: 'after', projection: { cardCounter: 1 } }
   );
   if (!reserved) throw new HttpError(404, 'Deck not found');
   return reserved.cardCounter - 1;

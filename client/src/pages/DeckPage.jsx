@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import CardEditor from "../components/CardEditor";
 import ExportMenu from "../components/ExportMenu";
+import AddCardModal from "../components/AddCardModal";
+import EditDeckModal from "../components/EditDeckModal";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
 import {
@@ -34,15 +36,8 @@ export default function DeckPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
 
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
-  const [frontImage, setFrontImage] = useState("");
-  const [backImage, setBackImage] = useState("");
+  const [editDeckOpen, setEditDeckOpen] = useState(false);
+  const [addCardOpen, setAddCardOpen] = useState(false);
 
   const [mode, setMode] = useState(STUDY_MODES.FLIP);
   const [sideFirst, setSideFirst] = useState(CARD_SIDES.FRONT);
@@ -52,9 +47,6 @@ export default function DeckPage() {
     try {
       const data = await api.getDeck(id);
       setDeck(data);
-      setTitle(data.title);
-      setDescription(data.description || "");
-      setCategory(data.category || "");
     } catch (err) {
       setError(err.message);
     }
@@ -75,47 +67,9 @@ export default function DeckPage() {
     loadStats();
   }, [loadDeck, loadStats]);
 
-  const uploadImage = useCallback(async (file) => {
-    try {
-      return await api.uploadCardImage(file);
-    } catch (err) {
-      setError(err.message);
-      return "";
-    }
-  }, []);
-
-  const handleImageUpload = useCallback((setter) => async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setter(await uploadImage(file));
-  }, [uploadImage]);
-
-  const handleSaveDeck = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      await api.updateDeck(deck._id, { title, description, category });
-      setEditing(false);
-      await loadDeck();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleAddCard = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      await api.addCard(deck._id, { front, back, frontImage, backImage });
-      setFront("");
-      setBack("");
-      setFrontImage("");
-      setBackImage("");
-      e.target.reset();
-      await Promise.all([loadDeck(), loadStats()]);
-    } catch (err) {
-      setError(err.message);
-    }
+  const handleCardChanged = () => {
+    loadDeck();
+    loadStats();
   };
 
   const handleExport = async (format) => {
@@ -178,20 +132,22 @@ export default function DeckPage() {
       <section className={`card ${styles.headerCard}`}>
         <div className={styles.headerTop}>
           <div className={styles.titleBlock}>
-            <h2>{deck.title}</h2>
-            {deck.description && <p className={styles.tagline}>{deck.description}</p>}
-            <div className={styles.metaRow}>
-              {deck.category && <span className={styles.pill}>{deck.category}</span>}
-              {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned · read-only</span>}
-              {Array.isArray(deck.tags) && deck.tags.map((t) => (
-                <span key={t} className={`${styles.pill} ${styles.muted}`}>{t}</span>
-              ))}
+            <div className={styles.titleHead}>
+              <h2>{deck.title}</h2>
+              <div className={styles.pillRow}>
+                {deck.category && <span className={styles.pill}>{deck.category}</span>}
+                {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned · read-only</span>}
+                {Array.isArray(deck.tags) && deck.tags.map((t) => (
+                  <span key={t} className={`${styles.pill} ${styles.muted}`}>{t}</span>
+                ))}
+              </div>
             </div>
+            {deck.description && <p className={styles.tagline}>{deck.description}</p>}
           </div>
           <div className="actions">
             {!deck.readOnly && (
-              <button type="button" className="btn" onClick={() => setEditing((v) => !v)}>
-                {editing ? "Cancel edit" : "Edit"}
+              <button type="button" className="btn" onClick={() => setEditDeckOpen(true)}>
+                Edit
               </button>
             )}
             <ExportMenu onExport={handleExport} />
@@ -202,24 +158,6 @@ export default function DeckPage() {
             )}
           </div>
         </div>
-
-        {editing && !deck.readOnly && (
-          <form className={styles.editForm} onSubmit={handleSaveDeck}>
-            <label>
-              Title
-              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </label>
-            <label>
-              Description
-              <input value={description} onChange={(e) => setDescription(e.target.value)} />
-            </label>
-            <label>
-              Category
-              <input value={category} onChange={(e) => setCategory(e.target.value)} />
-            </label>
-            <button type="submit" className="btn btn-primary">Save deck</button>
-          </form>
-        )}
       </section>
 
       <div className={styles.shell}>
@@ -283,49 +221,51 @@ export default function DeckPage() {
         </section>
       </div>
 
-      {!deck.readOnly && (
-        <section className="card">
-          <h3>Add card</h3>
-          <form onSubmit={handleAddCard}>
-            <label>
-              Front
-              <input value={front} onChange={(e) => setFront(e.target.value)} required />
-            </label>
-            <label>
-              Back
-              <input value={back} onChange={(e) => setBack(e.target.value)} required />
-            </label>
-            <label>
-              Front image
-              <input type="file" accept="image/*" onChange={handleImageUpload(setFrontImage)} />
-            </label>
-            <label>
-              Back image
-              <input type="file" accept="image/*" onChange={handleImageUpload(setBackImage)} />
-            </label>
-            <button type="submit">Add card</button>
-          </form>
-        </section>
-      )}
-
       <section className="card">
-        <h3>Cards<span className={styles.cardCount}>{cardCount} total</span></h3>
+        <div className={styles.cardsHeader}>
+          <h3>
+            Cards<span className={styles.cardCount}>{cardCount} total</span>
+          </h3>
+          {!deck.readOnly && (
+            <button type="button" className="btn btn-primary" onClick={() => setAddCardOpen(true)}>
+              Add card
+            </button>
+          )}
+        </div>
         {cardCount === 0 ? (
           <p>No cards yet.</p>
         ) : (
-          deck.cards.map((card) => (
-            <CardEditor
-              key={card._id}
-              card={card}
-              deckId={deck._id}
-              readOnly={deck.readOnly}
-              onSaved={() => { loadDeck(); loadStats(); }}
-              onError={setError}
-            />
-          ))
+          <div className={styles.cardsGrid}>
+            {deck.cards.map((card) => (
+              <CardEditor
+                key={card._id}
+                card={card}
+                deckId={deck._id}
+                readOnly={deck.readOnly}
+                onSaved={handleCardChanged}
+                onError={setError}
+              />
+            ))}
+          </div>
         )}
       </section>
 
+      {!deck.readOnly && (
+        <>
+          <EditDeckModal
+            open={editDeckOpen}
+            deck={deck}
+            onClose={() => setEditDeckOpen(false)}
+            onSaved={loadDeck}
+          />
+          <AddCardModal
+            open={addCardOpen}
+            deckId={deck._id}
+            onClose={() => setAddCardOpen(false)}
+            onAdded={handleCardChanged}
+          />
+        </>
+      )}
       {modal}
     </Layout>
   );

@@ -27,12 +27,14 @@ export default function DeckRow({
 }) {
   const isMini = variant === "mini";
   const cardCount = Array.isArray(deck.cards) ? deck.cards.length : deck.cardCount;
-  const updated = formatRelative(deck.updatedAt);
 
   const metaParts = [];
   if (typeof cardCount === "number") metaParts.push(`${cardCount} card${cardCount === 1 ? "" : "s"}`);
   if (deck.readOnly) metaParts.push("read-only");
-  else if (updated) metaParts.push(`updated ${updated}`);
+  if (isMini) {
+    const updated = formatRelative(deck.updatedAt);
+    if (updated) metaParts.push(`updated ${updated}`);
+  }
 
   return (
     <article className={`${styles.row} ${isMini ? styles.mini : ""}`}>
@@ -44,6 +46,9 @@ export default function DeckRow({
           {deck.category && <span className={styles.pill}>{deck.category}</span>}
           {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned</span>}
         </div>
+        {!isMini && deck.description && (
+          <p className={styles.description}>{deck.description}</p>
+        )}
         {metaParts.length > 0 && <p className={styles.meta}>{metaParts.join(" · ")}</p>}
       </div>
       <div className={styles.actions}>

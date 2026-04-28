@@ -1,32 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { api, imageUrl } from "../services/api";
 import useConfirm from "../hooks/useConfirm";
+import EditCardModal from "./EditCardModal";
+import { CARD_SIDES } from "../constants";
 import styles from "./CardEditor.module.css";
 
 export default function CardEditor({ card, deckId, readOnly, onSaved, onError }) {
-  const [front, setFront] = useState(card.front);
-  const [back, setBack] = useState(card.back);
   const { confirm, modal } = useConfirm();
+  const [flipped, setFlipped] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const reportError = useCallback((err) => {
     if (onError) onError(err.message);
   }, [onError]);
 
-  useEffect(() => {
-    setFront(card.front);
-    setBack(card.back);
-  }, [card._id]);
+  const currentSide = flipped ? CARD_SIDES.BACK : CARD_SIDES.FRONT;
 
-  const handleSave = useCallback(async () => {
-    try {
-      await api.updateCard(deckId, card._id, { front, back });
-      onSaved();
-    } catch (err) {
-      reportError(err);
-    }
-  }, [deckId, card._id, front, back, onSaved, reportError]);
-
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(async (e) => {
+    e.stopPropagation();
     const ok = await confirm({
       title: "Delete card?",
       message: `"${card.front}" will be permanently removed from this deck.`,
@@ -42,32 +33,67 @@ export default function CardEditor({ card, deckId, readOnly, onSaved, onError })
     }
   }, [confirm, deckId, card._id, card.front, onSaved, reportError]);
 
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    setEditOpen(true);
+  };
+
   return (
-    <article className="cardRow">
-      <div>
-        <strong>{card.front}</strong> -&gt; {card.back}
-        {card.frontImage && (
-          <img src={imageUrl(card.frontImage)} alt="Front visual" className={styles.thumb} />
-        )}
-        {card.backImage && (
-          <img src={imageUrl(card.backImage)} alt="Back visual" className={styles.thumb} />
-        )}
-      </div>
+    <article className={styles.scene}>
       {!readOnly && (
-        <div className="actions">
-          <input value={front} onChange={(e) => setFront(e.target.value)} />
-          <input value={back} onChange={(e) => setBack(e.target.value)} />
-          <button type="button" onClick={handleSave}>
-            Save
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label={`Edit ${currentSide}`}
+            title={`Edit ${currentSide}`}
+            onClick={handleEdit}
+          >
+            ✎
           </button>
           <button
             type="button"
-            className="btn-danger"
+            className={`${styles.iconBtn} ${styles.danger}`}
+            aria-label="Delete card"
+            title="Delete card"
             onClick={handleDelete}
           >
-            Delete
+            ✕
           </button>
         </div>
+      )}
+      <button
+        type="button"
+        className={`${styles.card} ${flipped ? styles.flipped : ""}`}
+        onClick={() => setFlipped((f) => !f)}
+        aria-label={`Flashcard showing ${currentSide}. Click to flip.`}
+      >
+        <div className={`${styles.face} ${styles.front}`}>
+          <span className={styles.faceLabel}>Front</span>
+          <p className={styles.faceText}>{card.front}</p>
+          {card.frontImage && (
+            <img src={imageUrl(card.frontImage)} alt="Front visual" className={styles.image} />
+          )}
+          <span className={styles.flipHint}>Click to flip</span>
+        </div>
+        <div className={`${styles.face} ${styles.back}`}>
+          <span className={styles.faceLabel}>Back</span>
+          <p className={styles.faceText}>{card.back}</p>
+          {card.backImage && (
+            <img src={imageUrl(card.backImage)} alt="Back visual" className={styles.image} />
+          )}
+          <span className={styles.flipHint}>Click to flip</span>
+        </div>
+      </button>
+      {!readOnly && (
+        <EditCardModal
+          open={editOpen}
+          card={card}
+          side={currentSide}
+          deckId={deckId}
+          onClose={() => setEditOpen(false)}
+          onSaved={onSaved}
+        />
       )}
       {modal}
     </article>

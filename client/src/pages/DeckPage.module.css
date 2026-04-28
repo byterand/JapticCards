@@ -22,21 +22,32 @@
   gap: 0.75rem;
 }
 
-.titleBlock h2 {
-  margin: 0 0 0.2rem;
+.titleBlock {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.titleHead h2 {
+  margin: 0;
   font-size: 1.4rem;
 }
 
 .tagline {
-  margin: 0;
+  margin: 0.35rem 0 0;
   color: #5a6478;
 }
 
-.metaRow {
+.pillRow {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
-  margin-top: 0.5rem;
 }
 
 .pill {
@@ -51,12 +62,6 @@
 .pill.muted {
   background: #d3d9e4;
   color: #37404f;
-}
-
-.editForm {
-  margin-top: 0.85rem;
-  border-top: 1px solid #e4e9f2;
-  padding-top: 0.85rem;
 }
 
 .setupRow {
@@ -121,9 +126,27 @@
   color: #132038;
 }
 
+.cardsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.cardsHeader h3 {
+  margin: 0;
+}
+
 .cardCount {
   color: #5a6478;
   font-size: 0.85rem;
   font-weight: 400;
   margin-left: 0.4rem;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
 }

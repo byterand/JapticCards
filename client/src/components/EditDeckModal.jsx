@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
-import { EXPORT_FORMATS } from "../constants";
-import FileButton from "./FileButton";
-import styles from "./ImportDeckModal.module.css";
+import styles from "./EditDeckModal.module.css";
 
-export default function ImportDeckModal({ open, onClose, onImported }) {
+export default function EditDeckModal({ open, deck, onClose, onSaved }) {
   const dialogRef = useRef(null);
-  const [format, setFormat] = useState(EXPORT_FORMATS.JSON);
-  const [file, setFile] = useState(null);
+  const titleRef = useRef(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,19 +17,22 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
     if (!dialog) return;
     if (open) {
       if (!dialog.open) dialog.showModal();
+      queueMicrotask(() => titleRef.current?.focus());
     } else if (dialog.open) {
       dialog.close();
     }
   }, [open]);
 
+  // Seed inputs from the deck whenever the modal opens.
   useEffect(() => {
-    if (open) {
-      setFormat(EXPORT_FORMATS.JSON);
-      setFile(null);
+    if (open && deck) {
+      setTitle(deck.title || "");
+      setDescription(deck.description || "");
+      setCategory(deck.category || "");
       setError("");
       setSubmitting(false);
     }
-  }, [open]);
+  }, [open, deck]);
 
   const handleCancelEvent = (e) => {
     e.preventDefault();
@@ -41,17 +45,12 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
-    if (!file) {
-      setError("Please choose a file to import.");
-      return;
-    }
+    if (submitting || !deck) return;
     setError("");
     setSubmitting(true);
     try {
-      const content = await file.text();
-      await api.importDeck({ format, content });
-      if (onImported) onImported();
+      await api.updateDeck(deck._id, { title, description, category });
+      if (onSaved) onSaved();
       onClose();
     } catch (err) {
       setError(err.message);
@@ -64,37 +63,42 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
     <dialog
       ref={dialogRef}
       className="modal"
-      aria-labelledby="import-deck-modal-title"
+      aria-labelledby="edit-deck-modal-title"
       onCancel={handleCancelEvent}
       onClick={handleBackdropClick}
     >
-      <h3 id="import-deck-modal-title">Import deck</h3>
-      <p>Pick the format and upload an exported deck file.</p>
+      <h3 id="edit-deck-modal-title">Edit deck</h3>
       {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
         <label className={styles.field}>
-          <span>Format</span>
-          <select value={format} onChange={(e) => setFormat(e.target.value)}>
-            <option value={EXPORT_FORMATS.JSON}>JSON</option>
-            <option value={EXPORT_FORMATS.CSV}>CSV</option>
-          </select>
-        </label>
-        <div className={styles.field}>
-          <span>File</span>
-          <FileButton
-            label="Choose file"
-            accept={format === EXPORT_FORMATS.CSV ? ".csv,text/csv" : ".json,application/json"}
-            fileName={file?.name || ""}
-            onChange={(e) => setFile(e.target.files[0] || null)}
-            onClear={() => setFile(null)}
+          <span>Title</span>
+          <input
+            ref={titleRef}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
           />
-        </div>
+        </label>
+        <label className={styles.field}>
+          <span>Description</span>
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </label>
+        <label className={styles.field}>
+          <span>Category</span>
+          <input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+        </label>
         <div className="modal-actions">
           <button type="button" onClick={onClose} disabled={submitting}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? "Importing..." : "Import"}
+            {submitting ? "Saving..." : "Save deck"}
           </button>
         </div>
       </form>

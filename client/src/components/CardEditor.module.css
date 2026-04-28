@@ -1,7 +1,125 @@
-.thumb {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
+.scene {
+  position: relative;
+  perspective: 900px;
+}
+
+.actions {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: flex;
+  gap: 0.3rem;
+  z-index: 2;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid #d2dae8;
+  background: #fff;
+  color: #132038;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.iconBtn:hover {
+  border-color: #aab8d1;
+}
+
+.danger {
+  color: #fff;
+  background: #c0392b;
+  border-color: #a82a1c;
+}
+
+.danger:hover {
+  background: #a82a1c;
+  border-color: #a82a1c;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transform-style: preserve-3d;
+  transition: transform 0.45s ease;
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.4rem 0.85rem 0.9rem;
+  background: #fff;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+.front {
+  transform: rotateY(0deg);
+}
+
+.back {
+  transform: rotateY(180deg);
+  background: #f6f9ff;
+}
+
+.faceLabel {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.6rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a6478;
+  font-weight: 500;
+}
+
+.faceText {
+  margin: 0;
+  font-size: 1.05rem;
+  text-align: center;
+  color: #132038;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
+
+.image {
+  max-width: 100%;
+  max-height: 90px;
+  object-fit: contain;
   border-radius: 8px;
-  margin-left: 0.4rem;
+}
+
+.flipHint {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.6rem;
+  font-size: 0.65rem;
+  color: #5a6478;
+  letter-spacing: 0.04em;
 }

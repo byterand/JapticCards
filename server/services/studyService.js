@@ -214,7 +214,7 @@ export async function submitAnswer(user, sessionId, payload) {
   const claimed = await StudySession.findOneAndUpdate(
     { _id: sessionId, user: user.userId, answeredCardIds: { $ne: card._id } },
     { $addToSet: { answeredCardIds: card._id } },
-    { new: true, projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
+    { returnDocument: 'after', projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
   );
 
   if (!claimed) {
