@@ -6,7 +6,7 @@ import {
   useMemo,
   useState
 } from "react";
-import { api } from "../services/api";
+import { api, setSessionExpiredHandler } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -25,6 +25,11 @@ export function AuthProvider({ children }) {
         if (restoredUser) setUser(restoredUser);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => setUser(null));
+    return () => setSessionExpiredHandler(null);
   }, []);
 
   // Each method is memoized so its identity stays stable across renders

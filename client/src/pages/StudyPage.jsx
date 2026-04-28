@@ -212,8 +212,7 @@ export default function StudyPage() {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [feedback, setFeedback] = useState(null);
+  const [cardFeedback, setCardFeedback] = useState({});
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -223,8 +222,14 @@ export default function StudyPage() {
 
   const current = session?.questions?.[index];
   const total = session?.questions?.length || 0;
-  const currentStatus = current ? statusByCard[String(current.cardId)] : undefined;
-  const answered = !!feedback;
+  const currentKey = current ? String(current.cardId) : null;
+  const currentStatus = currentKey ? statusByCard[currentKey] : undefined;
+  const currentRecord = currentKey ? cardFeedback[currentKey] : null;
+  const feedback = currentRecord
+    ? { isCorrect: currentRecord.isCorrect, expected: currentRecord.expected }
+    : null;
+  const selected = currentRecord?.selected ?? null;
+  const answered = !!currentRecord;
 
   const currentCardIdRef = useRef(null);
   currentCardIdRef.current = current?.cardId ?? null;
@@ -232,9 +237,7 @@ export default function StudyPage() {
   // Reset per-card state when navigating between cards or starting a new session
   useEffect(() => {
     setFlipped(false);
-    setTypedAnswer("");
-    setSelected(null);
-    setFeedback(null);
+    setTypedAnswer(typeof currentRecord?.selected === "string" ? currentRecord.selected : "");
   }, [index, session?.sessionId]);
 
   useEffect(() => {
@@ -247,6 +250,7 @@ export default function StudyPage() {
         setIndex(0);
         setSessionDone(false);
         setStatusByCard({});
+        setCardFeedback({});
       } catch (err) {
         if (!cancelled) setError(err.message);
       }
@@ -255,19 +259,13 @@ export default function StudyPage() {
   }, [id, mode, sideFirst, needsReviewOnly]);
 
   const goPrev = useCallback(() => {
-    setIndex((i) => {
-      const next = Math.max(0, i - 1);
-      if (next !== i) setSuppressFlipAnim(true);
-      return next;
-    });
+    setIndex((i) => Math.max(0, i - 1));
+    setSuppressFlipAnim(true);
   }, []);
 
   const goNext = useCallback(() => {
-    setIndex((i) => {
-      const next = Math.min(total - 1, i + 1);
-      if (next !== i) setSuppressFlipAnim(true);
-      return next;
-    });
+    setIndex((i) => Math.min(total - 1, i + 1));
+    setSuppressFlipAnim(true);
   }, [total]);
 
   useEffect(() => {
@@ -303,24 +301,29 @@ export default function StudyPage() {
   const submitAnswer = useCallback(async (payload, selectedDisplay) => {
     if (!session || !current || submitting || answered) return;
     const submittedCardId = current.cardId;
+    const submittedKey = String(submittedCardId);
     setSubmitting(true);
     setError("");
-    setSelected(selectedDisplay);
     try {
       const res = await api.answerSession(session.sessionId, {
         cardId: submittedCardId,
         ...payload
       });
-      if (currentCardIdRef.current !== submittedCardId) return;
-      setFeedback({ isCorrect: res.isCorrect, expected: res.expected });
+      setCardFeedback((m) => ({
+        ...m,
+        [submittedKey]: {
+          isCorrect: res.isCorrect,
+          expected: res.expected,
+          selected: selectedDisplay
+        }
+      }));
       if (res.completed) setSessionDone(true);
       const statRes = await api.getStats(id);
-      if (currentCardIdRef.current !== submittedCardId) return;
       setStats(statRes);
     } catch (err) {
-      if (currentCardIdRef.current !== submittedCardId) return;
-      setError(err.message);
-      setSelected(null);
+      if (currentCardIdRef.current === submittedCardId) {
+        setError(err.message);
+      }
     } finally {
       setSubmitting(false);
     }

@@ -16,6 +16,11 @@ export function imageUrl(value) {
 let accessToken = null;
 let refreshPromise = null;
 
+let onSessionExpired = null;
+export function setSessionExpiredHandler(fn) {
+  onSessionExpired = typeof fn === "function" ? fn : null;
+}
+
 function jsonHeaders() {
   return { "Content-Type": CONTENT_TYPES.JSON };
 }
@@ -69,7 +74,9 @@ async function doFetch(path, options, { retry = true } = {}) {
       await refreshAccessToken();
       return doFetch(path, options, { retry: false });
     } catch {
-      // fall through to error handling below
+      // Refresh failed during an authenticated session — let the auth layer
+      // know so it can clear local user state and bounce to login.
+      onSessionExpired?.();
     }
   }
   return res;
@@ -139,6 +146,10 @@ export const api = {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(extractErrorMessage(data, "Upload failed"));
     return data.url;
+  },
+  // Best-effort: server refuses if the URL is referenced by any Card.
+  deleteCardImage(url) {
+    return jsonRequest("/cards/image", "DELETE", { url });
   },
   createSession(payload) { return jsonRequest("/study/sessions", "POST", payload); },
   answerSession(sessionId, payload) {

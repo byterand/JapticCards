@@ -5,6 +5,11 @@ import styles from "./AddCardModal.module.css";
 
 const EMPTY_IMAGE = { url: "", name: "", uploading: false };
 
+function discardUpload(url) {
+  if (!url) return;
+  api.deleteCardImage(url).catch(() => {});
+}
+
 export default function AddCardModal({ open, deckId, onClose, onAdded }) {
   const dialogRef = useRef(null);
   const frontRef = useRef(null);
@@ -15,6 +20,8 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
   const [backImage, setBackImage] = useState(EMPTY_IMAGE);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const pendingUploadsRef = useRef(new Set());
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -36,26 +43,45 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
       setBackImage(EMPTY_IMAGE);
       setError("");
       setSubmitting(false);
+      pendingUploadsRef.current = new Set();
     }
   }, [open]);
 
-  const handleCancelEvent = (e) => {
-    e.preventDefault();
+  const cancelClose = () => {
+    pendingUploadsRef.current.forEach(discardUpload);
+    pendingUploadsRef.current.clear();
     onClose();
   };
 
+  const handleCancelEvent = (e) => {
+    e.preventDefault();
+    cancelClose();
+  };
 
-  const handleFilePick = (setter) => async (e) => {
+  const handleFilePick = (setter, currentUrl) => async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (currentUrl) {
+      pendingUploadsRef.current.delete(currentUrl);
+      discardUpload(currentUrl);
+    }
     setter({ url: "", name: file.name, uploading: true });
     try {
       const url = await api.uploadCardImage(file);
+      pendingUploadsRef.current.add(url);
       setter({ url, name: file.name, uploading: false });
     } catch (err) {
       setError(err.message);
       setter(EMPTY_IMAGE);
     }
+  };
+
+  const handleClear = (setter, currentUrl) => () => {
+    if (currentUrl) {
+      pendingUploadsRef.current.delete(currentUrl);
+      discardUpload(currentUrl);
+    }
+    setter(EMPTY_IMAGE);
   };
 
   const handleSubmit = async (e) => {
@@ -74,6 +100,10 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
         frontImage: frontImage.url,
         backImage: backImage.url
       });
+      pendingUploadsRef.current.delete(frontImage.url);
+      pendingUploadsRef.current.delete(backImage.url);
+      pendingUploadsRef.current.forEach(discardUpload);
+      pendingUploadsRef.current.clear();
       if (onAdded) onAdded();
       onClose();
     } catch (err) {
@@ -120,8 +150,8 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
               label="Choose image"
               accept="image/*"
               fileName={frontImage.name}
-              onChange={handleFilePick(setFrontImage)}
-              onClear={() => setFrontImage(EMPTY_IMAGE)}
+              onChange={handleFilePick(setFrontImage, frontImage.url)}
+              onClear={handleClear(setFrontImage, frontImage.url)}
             />
             {frontImage.uploading && <p className={styles.uploading}>Uploading...</p>}
             {frontImage.url && !frontImage.uploading && (
@@ -134,8 +164,8 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
               label="Choose image"
               accept="image/*"
               fileName={backImage.name}
-              onChange={handleFilePick(setBackImage)}
-              onClear={() => setBackImage(EMPTY_IMAGE)}
+              onChange={handleFilePick(setBackImage, backImage.url)}
+              onClear={handleClear(setBackImage, backImage.url)}
             />
             {backImage.uploading && <p className={styles.uploading}>Uploading...</p>}
             {backImage.url && !backImage.uploading && (
@@ -145,7 +175,7 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose} disabled={submitting}>
+          <button type="button" onClick={cancelClose} disabled={submitting}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={submitting}>

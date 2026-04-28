@@ -3,8 +3,9 @@ import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
+import Card from '../models/Card.js';
 import { verifyToken } from '../middleware/auth.js';
-import { uploadsRoot } from '../utils/cardImages.js';
+import { uploadsRoot, deleteManagedImage } from '../utils/cardImages.js';
 import { HttpError } from '../utils/HttpError.js';
 import {
   ALLOWED_IMAGE_MIMES,
@@ -53,6 +54,17 @@ const router = Router();
 router.post('/image', verifyToken, handleMulter, (req, res) => {
   if (!req.file) throw new HttpError(400, 'No image uploaded');
   return res.status(201).json({ url: `${CARD_UPLOADS_URL_PREFIX}${req.file.filename}` });
+});
+
+router.delete('/image', verifyToken, async (req, res) => {
+  const url = req.body?.url;
+  if (typeof url !== 'string' || !url.startsWith(CARD_UPLOADS_URL_PREFIX)) {
+    throw new HttpError(400, 'A managed card image url is required');
+  }
+  const inUse = await Card.exists({ $or: [{ frontImage: url }, { backImage: url }] });
+  if (inUse) throw new HttpError(409, 'Image is in use by a card');
+  await deleteManagedImage(url);
+  return res.json({ message: 'Image deleted' });
 });
 
 export default router;

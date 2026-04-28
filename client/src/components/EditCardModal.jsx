@@ -13,6 +13,11 @@ function deriveNameFromUrl(url) {
   return last.split("?")[0];
 }
 
+function discardUpload(url) {
+  if (!url) return;
+  api.deleteCardImage(url).catch(() => {});
+}
+
 export default function EditCardModal({
   open,
   card,
@@ -31,6 +36,8 @@ export default function EditCardModal({
   const [image, setImage] = useState(EMPTY_IMAGE);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const pendingUploadsRef = useRef(new Set());
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -52,26 +59,45 @@ export default function EditCardModal({
       setImage({ url: seedImage || "", name: deriveNameFromUrl(seedImage), uploading: false });
       setError("");
       setSubmitting(false);
+      pendingUploadsRef.current = new Set();
     }
   }, [open, card, isFront]);
 
-  const handleCancelEvent = (e) => {
-    e.preventDefault();
+  const cancelClose = () => {
+    pendingUploadsRef.current.forEach(discardUpload);
+    pendingUploadsRef.current.clear();
     onClose();
   };
 
+  const handleCancelEvent = (e) => {
+    e.preventDefault();
+    cancelClose();
+  };
 
   const handleFilePick = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (image.url && pendingUploadsRef.current.has(image.url)) {
+      pendingUploadsRef.current.delete(image.url);
+      discardUpload(image.url);
+    }
     setImage({ url: "", name: file.name, uploading: true });
     try {
       const url = await api.uploadCardImage(file);
+      pendingUploadsRef.current.add(url);
       setImage({ url, name: file.name, uploading: false });
     } catch (err) {
       setError(err.message);
       setImage(EMPTY_IMAGE);
     }
+  };
+
+  const handleClear = () => {
+    if (image.url && pendingUploadsRef.current.has(image.url)) {
+      pendingUploadsRef.current.delete(image.url);
+      discardUpload(image.url);
+    }
+    setImage(EMPTY_IMAGE);
   };
 
   const handleSubmit = async (e) => {
@@ -88,6 +114,9 @@ export default function EditCardModal({
         ? { front: text, frontImage: image.url }
         : { back: text, backImage: image.url };
       await api.updateCard(deckId, card._id, payload);
+      pendingUploadsRef.current.delete(image.url);
+      pendingUploadsRef.current.forEach(discardUpload);
+      pendingUploadsRef.current.clear();
       if (onSaved) onSaved();
       onClose();
     } catch (err) {
@@ -125,7 +154,7 @@ export default function EditCardModal({
             accept="image/*"
             fileName={image.name}
             onChange={handleFilePick}
-            onClear={() => setImage(EMPTY_IMAGE)}
+            onClear={handleClear}
           />
           {image.uploading && <p className={styles.uploading}>Uploading...</p>}
           {image.url && !image.uploading && (
@@ -134,7 +163,7 @@ export default function EditCardModal({
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose} disabled={submitting}>
+          <button type="button" onClick={cancelClose} disabled={submitting}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={submitting}>
