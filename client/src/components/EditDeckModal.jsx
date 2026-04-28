@@ -9,6 +9,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -29,6 +30,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
       setTitle(deck.title || "");
       setDescription(deck.description || "");
       setCategory(deck.category || "");
+      setTags(Array.isArray(deck.tags) ? deck.tags.map((t) => t.toLowerCase()).join(", ") : "");
       setError("");
       setSubmitting(false);
     }
@@ -39,14 +41,18 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
     onClose();
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting || !deck) return;
     setError("");
     setSubmitting(true);
     try {
-      await api.updateDeck(deck._id, { title, description, category });
+      await api.updateDeck(deck._id, {
+        title,
+        description,
+        category,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
+      });
       if (onSaved) onSaved();
       onClose();
     } catch (err) {
@@ -87,6 +93,14 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+          />
+        </label>
+        <label className={styles.field}>
+          <span>Tags (comma-separated)</span>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="travel, beginner"
           />
         </label>
         <div className="modal-actions">

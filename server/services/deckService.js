@@ -37,6 +37,20 @@ function applyDefinedFields(target, updates, fields) {
   });
 }
 
+function normalizeTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const raw of tags) {
+    if (typeof raw !== 'string') continue;
+    const lowered = raw.trim().toLowerCase();
+    if (!lowered || seen.has(lowered)) continue;
+    seen.add(lowered);
+    out.push(lowered);
+  }
+  return out;
+}
+
 function deckResponseFlags(isOwner) {
   return {
     readOnly: !isOwner,
@@ -64,7 +78,7 @@ export async function createDeck(userId, payload) {
     title: payload.title,
     description: payload.description || '',
     category: payload.category || '',
-    tags: payload.tags || []
+    tags: normalizeTags(payload.tags)
   });
 }
 
@@ -95,6 +109,9 @@ export async function updateDeck(user, deckId, updates) {
   }
   if (access.readOnly) {
     throw new HttpError(403, 'Assigned decks are read-only for students');
+  }
+  if (updates.tags !== undefined) {
+    updates = { ...updates, tags: normalizeTags(updates.tags) };
   }
   applyDefinedFields(access.deck, updates, DECK_UPDATABLE_FIELDS);
   await access.deck.save();
@@ -232,7 +249,7 @@ export async function importDeck(userId, { format, content }) {
     title: data.title,
     description: data.description || '',
     category: data.category || '',
-    tags: data.tags || []
+    tags: normalizeTags(data.tags)
   });
   const cards = await Promise.all(data.cards.map(async (card, index) => ({
     owner: userId,

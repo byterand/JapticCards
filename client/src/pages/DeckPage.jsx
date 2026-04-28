@@ -138,7 +138,7 @@ export default function DeckPage() {
                 {deck.category && <span className={styles.pill}>{deck.category}</span>}
                 {deck.readOnly && <span className={`${styles.pill} ${styles.muted}`}>Assigned · read-only</span>}
                 {Array.isArray(deck.tags) && deck.tags.map((t) => (
-                  <span key={t} className={`${styles.pill} ${styles.muted}`}>{t}</span>
+                  <span key={t} className={`${styles.pill} ${styles.muted}`}>{t.toLowerCase()}</span>
                 ))}
               </div>
             </div>
