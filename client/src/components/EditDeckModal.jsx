@@ -39,9 +39,6 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
     onClose();
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onClose();
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,7 +62,6 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
       className="modal"
       aria-labelledby="edit-deck-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="edit-deck-modal-title">Edit deck</h3>
       {error && <p className="error">{error}</p>}

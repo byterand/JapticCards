@@ -60,9 +60,6 @@ export default function EditCardModal({
     onClose();
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onClose();
-  };
 
   const handleFilePick = async (e) => {
     const file = e.target.files[0];
@@ -106,7 +103,6 @@ export default function EditCardModal({
       className="modal"
       aria-labelledby="edit-card-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="edit-card-modal-title">Edit {sideLabel.toLowerCase()}</h3>
       {error && <p className="error">{error}</p>}

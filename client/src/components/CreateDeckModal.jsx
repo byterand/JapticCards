@@ -43,9 +43,6 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
     onClose();
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onClose();
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +73,6 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
       className="modal"
       aria-labelledby="create-deck-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="create-deck-modal-title">New deck</h3>
       <p>You'll be taken to the deck page once its created.</p>

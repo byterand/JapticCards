@@ -44,9 +44,6 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
     onClose();
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onClose();
-  };
 
   const handleFilePick = (setter) => async (e) => {
     const file = e.target.files[0];
@@ -92,7 +89,6 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
       className="modal"
       aria-labelledby="add-card-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="add-card-modal-title">Add card</h3>
       {error && <p className="error">{error}</p>}

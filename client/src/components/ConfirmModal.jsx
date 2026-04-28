@@ -30,11 +30,6 @@ export default function ConfirmModal({
     onCancel();
   };
 
-  // Backdrop click: if the user clicks the dialog element itself (the
-  // backdrop area, outside the inner content), treat it as cancel.
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onCancel();
-  };
 
   return (
     <dialog
@@ -42,7 +37,6 @@ export default function ConfirmModal({
       className="modal"
       aria-labelledby="confirm-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="confirm-modal-title">{title}</h3>
       {message && <p>{message}</p>}

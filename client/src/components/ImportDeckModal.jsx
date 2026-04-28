@@ -35,9 +35,6 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
     onClose();
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === dialogRef.current) onClose();
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +63,6 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
       className="modal"
       aria-labelledby="import-deck-modal-title"
       onCancel={handleCancelEvent}
-      onClick={handleBackdropClick}
     >
       <h3 id="import-deck-modal-title">Import deck</h3>
       <p>Pick the format and upload an exported deck file.</p>
