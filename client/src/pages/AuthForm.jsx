@@ -4,12 +4,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { ROUTES, USER_ROLES } from "../constants";
 import styles from "./AuthForm.module.css";
 
-const AUTH_STAGES = {
-  LOGIN: "login",
-  REGISTER: "register",
-  AUTO_LOGIN: "auto-login"
-};
-
 const ROLE_OPTIONS = [
   {
     value: USER_ROLES.STUDENT,
@@ -52,20 +46,18 @@ export default function AuthForm({ registerMode = false }) {
       setError("Passwords do not match.");
       return;
     }
-    let stage = AUTH_STAGES.LOGIN;
+    let registered = false;
     try {
       if (registerMode) {
-        stage = AUTH_STAGES.REGISTER;
         await register({ username, password, role });
-        stage = AUTH_STAGES.AUTO_LOGIN;
+        registered = true;
       }
       await login(username, password);
       navigate(from, { replace: true });
     } catch (err) {
-      const message = stage === AUTH_STAGES.AUTO_LOGIN
+      setError(registered
         ? `Account created, but automatic sign-in failed: ${err.message}. You can sign in manually.`
-        : err.message;
-      setError(message);
+        : err.message);
     }
   };
 

@@ -33,8 +33,3 @@ export function invalidateJti(jti) {
   if (!jti) return;
   cache.delete(jti);
 }
-
-// Test hook
-export function _resetRevocationCache() {
-  cache.clear();
-}

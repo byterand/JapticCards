@@ -14,7 +14,8 @@ import {
   CONTENT_TYPES,
   STUDY_MODES,
   STUDY_MODE_LABELS,
-  buildPath
+  buildPath,
+  formatAccuracyPct
 } from "../constants";
 import styles from "./DeckPage.module.css";
 
@@ -121,9 +122,7 @@ export default function DeckPage() {
   }
 
   const cardCount = deck.cards?.length || 0;
-  const accuracyPct = stats && stats.totalAttempts
-    ? `${Math.round(stats.accuracyRate * 1000) / 10}%`
-    : "—";
+  const accuracyPct = formatAccuracyPct(stats) ?? "—";
 
   return (
     <Layout>

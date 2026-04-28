@@ -2,15 +2,11 @@ import { CONTENT_TYPES } from "../constants";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const ABSOLUTE_PREFIXES = ["data:", "http://", "https://"];
-
-function isAbsoluteUrl(value) {
-  return ABSOLUTE_PREFIXES.some((p) => value.startsWith(p));
-}
-
 export function imageUrl(value) {
   if (!value) return "";
-  if (isAbsoluteUrl(value)) return value;
+  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
   if (value.startsWith("/")) return `${BASE_URL}${value}`;
   return value;
 }
@@ -19,14 +15,6 @@ export function imageUrl(value) {
 // httpOnly cookie and travels with credentials: "include".
 let accessToken = null;
 let refreshPromise = null;
-
-export function setAccessToken(token) {
-  accessToken = token || null;
-}
-
-export function getAccessToken() {
-  return accessToken;
-}
 
 function jsonHeaders() {
   return { "Content-Type": CONTENT_TYPES.JSON };

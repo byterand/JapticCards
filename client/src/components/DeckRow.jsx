@@ -26,10 +26,12 @@ export default function DeckRow({
   onDelete
 }) {
   const isMini = variant === "mini";
-  const cardCount = Array.isArray(deck.cards) ? deck.cards.length : deck.cardCount;
 
   const metaParts = [];
-  if (typeof cardCount === "number") metaParts.push(`${cardCount} card${cardCount === 1 ? "" : "s"}`);
+  if (Array.isArray(deck.cards)) {
+    const n = deck.cards.length;
+    metaParts.push(`${n} card${n === 1 ? "" : "s"}`);
+  }
   if (deck.readOnly) metaParts.push("read-only");
   if (isMini) {
     const updated = formatRelative(deck.updatedAt);

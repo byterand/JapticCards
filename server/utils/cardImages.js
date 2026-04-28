@@ -34,10 +34,6 @@ function resolveManagedAbsPath(value) {
   return abs;
 }
 
-export function serverRoot() {
-  return SERVER_ROOT;
-}
-
 export function uploadsRoot() {
   return UPLOADS_ROOT;
 }

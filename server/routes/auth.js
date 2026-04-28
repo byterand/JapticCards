@@ -27,7 +27,7 @@ function clearRefreshCookie(res) {
 }
 
 function readRefreshToken(req) {
-  return req.cookies?.[REFRESH_COOKIE_NAME] || req.body?.refreshToken;
+  return req.cookies?.[REFRESH_COOKIE_NAME];
 }
 
 router.post('/register', registerRules, validate, async (req, res) => {

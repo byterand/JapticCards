@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api, imageUrl } from "../services/api";
@@ -10,7 +10,8 @@ import {
   STUDY_MODES,
   STUDY_MODE_VALUES,
   STUDY_MODE_LABELS,
-  buildPath
+  buildPath,
+  formatAccuracyPct
 } from "../constants";
 import styles from "./StudyPage.module.css";
 
@@ -407,11 +408,7 @@ export default function StudyPage() {
     }
   };
 
-  const accuracyPct = useMemo(() => {
-    if (!stats || !stats.totalAttempts) return null;
-    return `${Math.round(stats.accuracyRate * 1000) / 10}%`;
-  }, [stats]);
-
+  const accuracyPct = formatAccuracyPct(stats);
   const progressPct = total > 0 ? ((index + 1) / total) * 100 : 0;
 
   return (

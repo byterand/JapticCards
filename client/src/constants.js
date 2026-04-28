@@ -80,3 +80,8 @@ export const buildPath = {
   deck: (id) => `/decks/${id}`,
   study: (id) => `/study/${id}`
 };
+
+export function formatAccuracyPct(stats) {
+  if (!stats || !stats.totalAttempts) return null;
+  return `${Math.round(stats.accuracyRate * 1000) / 10}%`;
+}

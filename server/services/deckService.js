@@ -29,14 +29,6 @@ const CSV_COLUMNS = [
 
 const DECK_UPDATABLE_FIELDS = ['title', 'description', 'category', 'tags'];
 
-function applyDefinedFields(target, updates, fields) {
-  fields.forEach((field) => {
-    if (updates[field] !== undefined) {
-      target[field] = updates[field];
-    }
-  });
-}
-
 function normalizeTags(tags) {
   if (!Array.isArray(tags)) return [];
   const seen = new Set();
@@ -113,7 +105,9 @@ export async function updateDeck(user, deckId, updates) {
   if (updates.tags !== undefined) {
     updates = { ...updates, tags: normalizeTags(updates.tags) };
   }
-  applyDefinedFields(access.deck, updates, DECK_UPDATABLE_FIELDS);
+  DECK_UPDATABLE_FIELDS.forEach((field) => {
+    if (updates[field] !== undefined) access.deck[field] = updates[field];
+  });
   await access.deck.save();
   return access.deck;
 }

@@ -23,25 +23,4 @@ const userSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Cascade delete any RefreshToken docs belonging to a user when the user is removed
-async function cleanupRefreshTokensForUserIds(ids) {
-  if (!ids || ids.length === 0) return;
-  const RefreshToken = mongoose.model('RefreshToken');
-  await RefreshToken.deleteMany({ userId: { $in: ids } });
-}
-
-userSchema.pre('deleteOne', { document: true, query: false }, async function () {
-  await cleanupRefreshTokensForUserIds([this._id]);
-});
-
-userSchema.pre('findOneAndDelete', async function () {
-  const doc = await this.model.findOne(this.getFilter()).select('_id');
-  if (doc) await cleanupRefreshTokensForUserIds([doc._id]);
-});
-
-userSchema.pre('deleteMany', async function () {
-  const docs = await this.model.find(this.getFilter()).select('_id');
-  await cleanupRefreshTokensForUserIds(docs.map((d) => d._id));
-});
-
 export default mongoose.model('User', userSchema);
