@@ -17,9 +17,12 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open)
+        dialog.showModal();
       queueMicrotask(() => titleRef.current?.focus());
     } else if (dialog.open) {
       dialog.close();
@@ -43,12 +46,14 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
     onClose();
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting)
+      return;
+
     setError("");
     setSubmitting(true);
+
     try {
       const created = await api.createDeck({
         title,
@@ -56,10 +61,14 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
         category,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
       });
-      if (onCreated) onCreated(created);
+
+      if (onCreated)
+        onCreated(created);
       onClose();
+
       // Land on the new deck page so the user can immediately add cards.
-      if (created?._id) navigate(buildPath.deck(created._id));
+      if (created?._id)
+        navigate(buildPath.deck(created._id));
     } catch (err) {
       setError(err.message);
     } finally {

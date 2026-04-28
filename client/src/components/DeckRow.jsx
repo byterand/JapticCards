@@ -4,18 +4,29 @@ import { buildPath } from "../constants";
 import styles from "./DeckRow.module.css";
 
 function formatRelative(value) {
-  if (!value) return "";
+  if (!value)
+    return "";
+
   const then = new Date(value).getTime();
-  if (Number.isNaN(then)) return "";
+  if (Number.isNaN(then))
+    return "";
+
   const diffMs = Date.now() - then;
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
-  if (diffMs < minute) return "just now";
-  if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
-  if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
-  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)}d ago`;
-  if (diffMs < 30 * day) return `${Math.floor(diffMs / (7 * day))}w ago`;
+
+  if (diffMs < minute)
+    return "just now";
+  if (diffMs < hour)
+    return `${Math.floor(diffMs / minute)}m ago`;
+  if (diffMs < day)
+    return `${Math.floor(diffMs / hour)}h ago`;
+  if (diffMs < 7 * day)
+    return `${Math.floor(diffMs / day)}d ago`;
+  if (diffMs < 30 * day)
+    return `${Math.floor(diffMs / (7 * day))}w ago`;
+
   return new Date(value).toLocaleDateString();
 }
 
@@ -32,6 +43,7 @@ export default function DeckRow({
     const n = deck.cards.length;
     metaParts.push(`${n} card${n === 1 ? "" : "s"}`);
   }
+  
   if (isMini) {
     const updated = formatRelative(deck.updatedAt);
     if (updated) metaParts.push(`updated ${updated}`);

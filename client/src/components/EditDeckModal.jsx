@@ -15,9 +15,12 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open)
+        dialog.showModal();
       queueMicrotask(() => titleRef.current?.focus());
     } else if (dialog.open) {
       dialog.close();
@@ -43,9 +46,12 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting || !deck) return;
+    if (submitting || !deck)
+      return;
+
     setError("");
     setSubmitting(true);
+
     try {
       await api.updateDeck(deck._id, {
         title,
@@ -53,7 +59,9 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
         category,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean)
       });
-      if (onSaved) onSaved();
+
+      if (onSaved)
+        onSaved();
       onClose();
     } catch (err) {
       setError(err.message);

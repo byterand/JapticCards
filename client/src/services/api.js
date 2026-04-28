@@ -3,11 +3,15 @@ import { CONTENT_TYPES } from "../constants";
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export function imageUrl(value) {
-  if (!value) return "";
-  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://")) {
+  if (!value)
+    return "";
+
+  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://"))
     return value;
-  }
-  if (value.startsWith("/")) return `${BASE_URL}${value}`;
+
+  if (value.startsWith("/"))
+    return `${BASE_URL}${value}`;
+
   return value;
 }
 
@@ -30,21 +34,26 @@ function isJsonResponse(res) {
 }
 
 async function refreshAccessToken() {
-  if (refreshPromise) return refreshPromise;
+  if (refreshPromise)
+    return refreshPromise;
+
   refreshPromise = (async () => {
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: jsonHeaders()
     });
+
     if (!res.ok) {
       accessToken = null;
       throw new Error("Session expired");
     }
+
     const data = await res.json();
     accessToken = data.token;
     return data;
   })();
+
   try {
     return await refreshPromise;
   } finally {
@@ -59,7 +68,9 @@ async function doFetch(path, options, { retry = true } = {}) {
     ...(isFormData ? {} : jsonHeaders()),
     ...(options.headers || {})
   };
-  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+  if (accessToken)
+    headers.Authorization = `Bearer ${accessToken}`;
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -90,15 +101,17 @@ function extractErrorMessage(data, fallback = "Request failed") {
 async function request(path, options = {}) {
   const res = await doFetch(path, options);
   const data = isJsonResponse(res) ? await res.json() : await res.text();
-  if (!res.ok) {
+
+  if (!res.ok)
     throw new Error(extractErrorMessage(data));
-  }
+
   return data;
 }
 
 function jsonRequest(path, method, payload) {
   const options = { method };
-  if (payload !== undefined) options.body = JSON.stringify(payload);
+  if (payload !== undefined)
+    options.body = JSON.stringify(payload);
   return request(path, options);
 }
 
@@ -127,12 +140,24 @@ export const api = {
     }
   },
   me() { return request("/auth/me"); },
-  getDecks() { return request("/decks"); },
-  createDeck(payload) { return jsonRequest("/decks", "POST", payload); },
-  getDeck(id) { return request(`/decks/${id}`); },
-  updateDeck(id, payload) { return jsonRequest(`/decks/${id}`, "PATCH", payload); },
-  deleteDeck(id) { return jsonRequest(`/decks/${id}`, "DELETE"); },
-  addCard(deckId, payload) { return jsonRequest(`/decks/${deckId}/cards`, "POST", payload); },
+  getDecks() {
+    return request("/decks");
+  },
+  createDeck(payload) {
+    return jsonRequest("/decks", "POST", payload);
+  },
+  getDeck(id) {
+    return request(`/decks/${id}`);
+  },
+  updateDeck(id, payload) {
+    return jsonRequest(`/decks/${id}`, "PATCH", payload);
+  },
+  deleteDeck(id) {
+    return jsonRequest(`/decks/${id}`, "DELETE");
+  },
+  addCard(deckId, payload) {
+    return jsonRequest(`/decks/${deckId}/cards`, "POST", payload);
+  },
   updateCard(deckId, cardId, payload) {
     return jsonRequest(`/decks/${deckId}/cards/${cardId}`, "PATCH", payload);
   },
@@ -144,14 +169,19 @@ export const api = {
     form.append("image", file);
     const res = await doFetch("/cards/image", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(extractErrorMessage(data, "Upload failed"));
+
+    if (!res.ok)
+      throw new Error(extractErrorMessage(data, "Upload failed"));
+
     return data.url;
   },
   // Best-effort: server refuses if the URL is referenced by any Card.
   deleteCardImage(url) {
     return jsonRequest("/cards/image", "DELETE", { url });
   },
-  createSession(payload) { return jsonRequest("/study/sessions", "POST", payload); },
+  createSession(payload) {
+    return jsonRequest("/study/sessions", "POST", payload);
+  },
   answerSession(sessionId, payload) {
     return jsonRequest(`/study/sessions/${sessionId}/answer`, "POST", payload);
   },
@@ -161,7 +191,9 @@ export const api = {
   setCardStatus(deckId, cardId, status) {
     return jsonRequest(`/decks/${deckId}/cards/${cardId}/status`, "PATCH", { status });
   },
-  getStats(deckId) { return request(`/decks/${deckId}/stats`); },
+  getStats(deckId) {
+    return request(`/decks/${deckId}/stats`);
+  },
   async exportDeck(id, format) {
     const res = await doFetch(`/decks/${id}/export?format=${format}`, { method: "GET" });
     if (!res.ok) {
@@ -178,5 +210,7 @@ export const api = {
     }
     return res.text();
   },
-  importDeck(payload) { return jsonRequest("/decks/import", "POST", payload); }
+  importDeck(payload) {
+    return jsonRequest("/decks/import", "POST", payload);
+  }
 };

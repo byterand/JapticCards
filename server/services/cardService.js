@@ -11,15 +11,15 @@ const IMAGE_FIELDS = new Set(['frontImage', 'backImage']);
 
 async function requireWritableDeck(user, deckId) {
   const access = await getAccessibleDeckLean(user, deckId);
-  if (!access) throw new HttpError(404, 'Deck not found');
+  if (!access)
+    throw new HttpError(404, 'Deck not found');
   return access;
 }
 
 async function findCardInDeck(cardId, deckId) {
   const card = await Card.findById(cardId);
-  if (!card || String(card.deck) !== String(deckId)) {
+  if (!card || String(card.deck) !== String(deckId))
     throw new HttpError(404, 'Card not found');
-  }
   return card;
 }
 
@@ -32,12 +32,16 @@ async function reserveNextOrder(deckId) {
       { $set: { cardCounter: initialCount } }
     );
   }
+
   const reserved = await Deck.findOneAndUpdate(
     { _id: deckId },
     { $inc: { cardCounter: 1 } },
     { returnDocument: 'after', projection: { cardCounter: 1 } }
   );
-  if (!reserved) throw new HttpError(404, 'Deck not found');
+
+  if (!reserved)
+    throw new HttpError(404, 'Deck not found');
+
   return reserved.cardCounter - 1;
 }
 
@@ -64,12 +68,15 @@ export async function updateCard(user, deckId, cardId, updates) {
   // Track images that will be orphaned by this update
   const orphanedImages = [];
   CARD_UPDATABLE_FIELDS.forEach((field) => {
-    if (updates[field] === undefined) return;
-    if (IMAGE_FIELDS.has(field) && card[field] && card[field] !== updates[field]) {
+    if (updates[field] === undefined)
+      return;
+
+    if (IMAGE_FIELDS.has(field) && card[field] && card[field] !== updates[field])
       orphanedImages.push(card[field]);
-    }
+
     card[field] = updates[field];
   });
+
   await card.save();
   await Promise.allSettled(orphanedImages.map(deleteManagedImage));
   return card;
@@ -79,9 +86,11 @@ export async function deleteCard(user, deckId, cardId) {
   // Authorize first
   await requireWritableDeck(user, deckId);
   const card = await findCardInDeck(cardId, deckId);
+
   await withTransaction(async (session) => {
     await CardProgress.deleteMany({ card: card._id }, { session });
     await Card.deleteOne({ _id: card._id }, { session });
   });
+
   await Promise.allSettled([deleteManagedImagesForCard(card)]);
 }

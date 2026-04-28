@@ -71,6 +71,5 @@ export const buildPath = {
 };
 
 export function formatAccuracyPct(stats) {
-  if (!stats || !stats.totalAttempts) return null;
-  return `${Math.round(stats.accuracyRate * 1000) / 10}%`;
+  return stats && stats.totalAttempts ? `${Math.round(stats.accuracyRate * 1000) / 10}%` : null;
 }

@@ -25,7 +25,9 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
       if (!dialog.open) dialog.showModal();
       queueMicrotask(() => frontRef.current?.focus());
@@ -60,12 +62,16 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
 
   const handleFilePick = (setter, currentUrl) => async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file)
+      return;
+
     if (currentUrl) {
       pendingUploadsRef.current.delete(currentUrl);
       discardUpload(currentUrl);
     }
+
     setter({ url: "", name: file.name, uploading: true });
+
     try {
       const url = await api.uploadCardImage(file);
       pendingUploadsRef.current.add(url);
@@ -86,13 +92,17 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting)
+      return;
+
     if (frontImage.uploading || backImage.uploading) {
       setError("Please wait for image upload to finish.");
       return;
     }
+
     setError("");
     setSubmitting(true);
+
     try {
       await api.addCard(deckId, {
         front,
@@ -100,11 +110,14 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
         frontImage: frontImage.url,
         backImage: backImage.url
       });
+
       pendingUploadsRef.current.delete(frontImage.url);
       pendingUploadsRef.current.delete(backImage.url);
       pendingUploadsRef.current.forEach(discardUpload);
       pendingUploadsRef.current.clear();
-      if (onAdded) onAdded();
+
+      if (onAdded)
+        onAdded();
       onClose();
     } catch (err) {
       setError(err.message);

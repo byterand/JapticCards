@@ -6,9 +6,8 @@ import { CARD_STATUS } from '../utils/constants.js';
 
 export async function getDeckStats(user, deckId) {
   const access = await getAccessibleDeckLean(user, deckId);
-  if (!access) {
+  if (!access)
     throw new HttpError(404, 'Deck not found');
-  }
 
   const cards = await Card.find({ deck: deckId }).select('_id front back').lean();
   const progress = await CardProgress.find({
@@ -22,9 +21,12 @@ export async function getDeckStats(user, deckId) {
   let cardsStudied = 0;
   const cardStats = cards.map((card) => {
     const p = progressMap.get(String(card._id));
+
     const cardCorrect = p?.correctCount || 0;
     const cardIncorrect = p?.incorrectCount || 0;
-    if (cardCorrect + cardIncorrect > 0) cardsStudied += 1;
+    if (cardCorrect + cardIncorrect > 0)
+      cardsStudied += 1;
+
     correctCount += cardCorrect;
     incorrectCount += cardIncorrect;
     return {

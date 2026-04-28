@@ -9,7 +9,9 @@ const BEARER_PREFIX = 'Bearer ';
 
 function extractBearerToken(req) {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith(BEARER_PREFIX)) return null;
+  if (!authHeader?.startsWith(BEARER_PREFIX))
+    return null;
+
   return authHeader.slice(BEARER_PREFIX.length);
 }
 
@@ -21,10 +23,16 @@ function attachUser(req, decoded, token) {
 }
 
 async function isRevoked(jti) {
-  if (!jti) return false;
-  if (isJtiKnownGood(jti)) return false;
+  if (!jti)
+    return false;
+
+  if (isJtiKnownGood(jti))
+    return false;
+
   const revoked = await RevokedToken.findOne({ jti });
-  if (revoked) return true;
+  if (revoked)
+    return true;
+
   markJtiGood(jti);
   return false;
 }
@@ -35,14 +43,17 @@ export async function verifyToken(req, res, next) {
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
   }
+
   try {
     const decoded = jwt.verify(token, config.jwtSecret, jwtVerifyOptions());
     if (decoded.typ === REFRESH_TOKEN_TYPE) {
       return res.status(401).json({ message: 'Invalid token type' });
     }
+
     if (await isRevoked(decoded.jti)) {
       return res.status(401).json({ message: 'Session is no longer valid' });
     }
+
     attachUser(req, decoded, token);
     return next();
   } catch {
@@ -52,7 +63,9 @@ export async function verifyToken(req, res, next) {
 
 export async function optionalVerifyToken(req, res, next) {
   const token = extractBearerToken(req);
-  if (!token) return next();
+  if (!token)
+    return next();
+
   try {
     const decoded = jwt.verify(token, config.jwtSecret, jwtVerifyOptions());
     if (decoded.typ !== REFRESH_TOKEN_TYPE) {
@@ -61,5 +74,6 @@ export async function optionalVerifyToken(req, res, next) {
   } catch {
     // Invalid/expired token is acceptable here — just proceed unauthenticated.
   }
+
   return next();
 }

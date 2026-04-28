@@ -2,8 +2,12 @@ import Deck from '../models/Deck.js';
 
 // Owner-only access: returns the deck if the user owns it, null otherwise.
 function resolveAccess(user, deck) {
-  if (!deck) return null;
-  if (String(deck.owner) !== String(user.userId)) return null;
+  if (!deck)
+    return null;
+
+  if (String(deck.owner) !== String(user.userId))
+    return null;
+
   return { deck };
 }
 

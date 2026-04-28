@@ -21,23 +21,27 @@ export default function AuthForm({ registerMode = false }) {
   }
 
   const onChange = (setter) => (e) => {
-    if (error) setError("");
+    if (error)
+      setError("");
     setter(e.target.value);
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (registerMode && password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
+
     let registered = false;
     try {
       if (registerMode) {
         await register({ username, password });
         registered = true;
       }
+
       await login(username, password);
       navigate(from, { replace: true });
     } catch (err) {

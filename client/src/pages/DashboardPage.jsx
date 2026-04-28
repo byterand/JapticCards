@@ -40,6 +40,7 @@ export default function DashboardPage() {
       const blob = new Blob([content], { type: blobType });
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
+
       anchor.href = url;
       anchor.download = `${deck.title || "deck"}.${format}`;
       document.body.appendChild(anchor);
@@ -58,7 +59,10 @@ export default function DashboardPage() {
       confirmLabel: "Delete",
       danger: true
     });
-    if (!ok) return;
+
+    if (!ok)
+      return;
+
     try {
       await api.deleteDeck(deck._id);
       await loadDecks();

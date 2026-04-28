@@ -21,9 +21,13 @@ import styles from "./DeckPage.module.css";
 
 function buildStudyUrl(deckId, mode, sideFirst, needsReviewOnly) {
   const params = new URLSearchParams();
-  if (mode) params.set("mode", mode);
-  if (sideFirst) params.set("side", sideFirst);
-  if (needsReviewOnly) params.set("review", "1");
+  if (mode)
+    params.set("mode", mode);
+  if (sideFirst)
+    params.set("side", sideFirst);
+  if (needsReviewOnly)
+    params.set("review", "1");
+
   const qs = params.toString();
   return qs ? `${buildPath.study(deckId)}?${qs}` : buildPath.study(deckId);
 }
@@ -81,6 +85,7 @@ export default function DeckPage() {
       const blob = new Blob([content], { type: blobType });
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
+
       anchor.href = url;
       anchor.download = `${deck.title || "deck"}.${format}`;
       document.body.appendChild(anchor);
@@ -99,7 +104,10 @@ export default function DeckPage() {
       confirmLabel: "Delete",
       danger: true
     });
-    if (!ok) return;
+
+    if (!ok)
+      return;
+
     try {
       await api.deleteDeck(deck._id);
       navigate("/dashboard");

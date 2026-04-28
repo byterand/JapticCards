@@ -15,12 +15,15 @@ export default function FileButton({
   const inputId = useId();
 
   const handleChange = (e) => {
-    if (onChange) onChange(e);
+    if (onChange)
+      onChange(e);
   };
 
   const handleClear = () => {
-    if (inputRef.current) inputRef.current.value = "";
-    if (onClear) onClear();
+    if (inputRef.current)
+      inputRef.current.value = "";
+    if (onClear)
+      onClear();
   };
 
   return (

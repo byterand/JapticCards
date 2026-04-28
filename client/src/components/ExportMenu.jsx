@@ -15,15 +15,20 @@ export default function ExportMenu({
   useEffect(() => {
     const handler = (e) => {
       const el = detailsRef.current;
-      if (!el || !el.open) return;
-      if (!el.contains(e.target)) el.open = false;
+      if (!el || !el.open)
+        return;
+
+      if (!el.contains(e.target))
+        el.open = false;
     };
+
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, []);
 
   const pick = (format) => {
-    if (detailsRef.current) detailsRef.current.open = false;
+    if (detailsRef.current)
+      detailsRef.current.open = false;
     onExport(format);
   };
 

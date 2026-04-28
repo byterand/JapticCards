@@ -41,6 +41,7 @@ router.post('/login', loginRules, validate, async (req, res) => {
     username: req.body.username,
     password: req.body.password
   });
+
   setRefreshCookie(res, refreshToken);
   return res.json({ token, user });
 });

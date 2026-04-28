@@ -41,9 +41,12 @@ export default function EditCardModal({
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open)
+        dialog.showModal();
       queueMicrotask(() => textRef.current?.focus());
     } else if (dialog.open) {
       dialog.close();
@@ -76,12 +79,16 @@ export default function EditCardModal({
 
   const handleFilePick = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file)
+      return;
+
     if (image.url && pendingUploadsRef.current.has(image.url)) {
       pendingUploadsRef.current.delete(image.url);
       discardUpload(image.url);
     }
+
     setImage({ url: "", name: file.name, uploading: true });
+
     try {
       const url = await api.uploadCardImage(file);
       pendingUploadsRef.current.add(url);
@@ -102,22 +109,29 @@ export default function EditCardModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting || !card) return;
+    if (submitting || !card)
+      return;
+
     if (image.uploading) {
       setError("Please wait for image upload to finish.");
       return;
     }
+
     setError("");
     setSubmitting(true);
+
     try {
       const payload = isFront
         ? { front: text, frontImage: image.url }
         : { back: text, backImage: image.url };
       await api.updateCard(deckId, card._id, payload);
+
       pendingUploadsRef.current.delete(image.url);
       pendingUploadsRef.current.forEach(discardUpload);
       pendingUploadsRef.current.clear();
-      if (onSaved) onSaved();
+
+      if (onSaved)
+        onSaved();
       onClose();
     } catch (err) {
       setError(err.message);

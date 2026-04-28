@@ -1,22 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmModal from "../components/ConfirmModal";
 
-/**
- * Usage:
- *   const { confirm, modal } = useConfirm();
- *   ...
- *   const ok = await confirm({
- *     title: "Delete deck?",
- *     message: `"${deck.title}" will be permanently removed.`,
- *     confirmLabel: "Delete",
- *     danger: true
- *   });
- *   if (!ok) return;
- *   await api.deleteDeck(deck._id);
- *
- *   // Render anywhere in the component tree:
- *   return <>{modal}{/* ... *\/}</>;
- */
 export default function useConfirm() {
   const [pending, setPending] = useState(null);
 
@@ -34,7 +18,8 @@ export default function useConfirm() {
   }, []);
 
   const close = (result) => {
-    if (pending) pending.resolve(result);
+    if (pending)
+      pending.resolve(result);
     setPending(null);
   };
 

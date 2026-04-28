@@ -40,11 +40,15 @@ const upload = multer({
 
 function handleMulter(req, res, next) {
   upload.single('image')(req, res, (err) => {
-    if (!err) return next();
-    if (err instanceof HttpError) return next(err);
-    if (err.code === 'LIMIT_FILE_SIZE') {
+    if (!err)
+      return next();
+
+    if (err instanceof HttpError)
+      return next(err);
+
+    if (err.code === 'LIMIT_FILE_SIZE')
       return next(new HttpError(413, 'Image exceeds 5 MB limit'));
-    }
+
     return next(new HttpError(400, err.message || 'Upload failed'));
   });
 }
@@ -52,7 +56,8 @@ function handleMulter(req, res, next) {
 const router = Router();
 
 router.post('/image', verifyToken, handleMulter, (req, res) => {
-  if (!req.file) throw new HttpError(400, 'No image uploaded');
+  if (!req.file)
+    throw new HttpError(400, 'No image uploaded');
   return res.status(201).json({ url: `${CARD_UPLOADS_URL_PREFIX}${req.file.filename}` });
 });
 
@@ -61,8 +66,11 @@ router.delete('/image', verifyToken, async (req, res) => {
   if (typeof url !== 'string' || !url.startsWith(CARD_UPLOADS_URL_PREFIX)) {
     throw new HttpError(400, 'A managed card image url is required');
   }
+
   const inUse = await Card.exists({ $or: [{ frontImage: url }, { backImage: url }] });
-  if (inUse) throw new HttpError(409, 'Image is in use by a card');
+  if (inUse)
+    throw new HttpError(409, 'Image is in use by a card');
+
   await deleteManagedImage(url);
   return res.json({ message: 'Image deleted' });
 });

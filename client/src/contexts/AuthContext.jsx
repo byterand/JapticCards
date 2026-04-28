@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
     // Attempt silent re-auth via the httpOnly refresh cookie.
     api.restoreSession()
       .then((restoredUser) => {
-        if (restoredUser) setUser(restoredUser);
+        if (restoredUser)
+          setUser(restoredUser);
       })
       .finally(() => setLoading(false));
   }, []);

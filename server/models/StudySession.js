@@ -12,8 +12,7 @@ const sessionQuestionSchema = new mongoose.Schema({
     ref: 'Card',
     required: true
   },
-  // multiple_choice
-  options: {
+  options: { // multiple_choice
     type: [String],
     default: undefined
   },
@@ -21,8 +20,7 @@ const sessionQuestionSchema = new mongoose.Schema({
     type: String,
     default: undefined
   },
-  // true_false
-  statement: {
+  statement: { // true_false
     type: String,
     default: undefined
   },

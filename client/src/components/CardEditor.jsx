@@ -11,7 +11,9 @@ export default function CardEditor({ card, deckId, onSaved, onError }) {
   const [editOpen, setEditOpen] = useState(false);
 
   const reportError = useCallback((err) => {
-    if (onError) onError(err.message);
+    if (onError) {
+      onError(err.message);
+    }
   }, [onError]);
 
   const currentSide = flipped ? CARD_SIDES.BACK : CARD_SIDES.FRONT;
@@ -24,7 +26,10 @@ export default function CardEditor({ card, deckId, onSaved, onError }) {
       confirmLabel: "Delete",
       danger: true
     });
-    if (!ok) return;
+
+    if (!ok)
+      return;
+
     try {
       await api.deleteCard(deckId, card._id);
       onSaved();

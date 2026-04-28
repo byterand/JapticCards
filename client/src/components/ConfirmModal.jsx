@@ -16,9 +16,12 @@ export default function ConfirmModal({
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open)
+        dialog.showModal();
       queueMicrotask(() => confirmBtnRef.current?.focus());
     } else if (dialog.open) {
       dialog.close();
@@ -29,7 +32,6 @@ export default function ConfirmModal({
     e.preventDefault();
     onCancel();
   };
-
 
   return (
     <dialog

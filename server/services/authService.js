@@ -38,6 +38,7 @@ async function issueRefreshToken(user, family) {
     config.jwtSecret,
     jwtSignOptions({ expiresIn: config.jwt.refreshTtlSeconds, jwtid: jti })
   );
+
   const expiresAt = new Date(Date.now() + config.jwt.refreshTtlSeconds * 1000);
   await RefreshToken.create({
     jti,
@@ -46,6 +47,7 @@ async function issueRefreshToken(user, family) {
     family: fam,
     expiresAt
   });
+
   return { token, jti, family: fam };
 }
 
@@ -56,9 +58,10 @@ function verifyRefreshToken(token) {
   } catch {
     throw new HttpError(401, 'Invalid refresh token');
   }
-  if (payload.typ !== REFRESH_TOKEN_TYPE) {
+
+  if (payload.typ !== REFRESH_TOKEN_TYPE)
     throw new HttpError(401, 'Wrong token type');
-  }
+
   return payload;
 }
 
@@ -71,7 +74,9 @@ async function revokeFamily(family) {
 
 export async function registerUser({ username, password }) {
   const existing = await User.findOne({ username });
-  if (existing) throw new HttpError(409, 'Username is taken');
+  if (existing)
+    throw new HttpError(409, 'Username is taken');
+
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
   const user = await User.create({ username, password: hashed });
   return { userId: user._id };
@@ -79,9 +84,12 @@ export async function registerUser({ username, password }) {
 
 export async function loginUser({ username, password }) {
   const user = await User.findOne({ username });
-  if (!user) throw new HttpError(401, 'Invalid credentials');
+  if (!user)
+    throw new HttpError(401, 'Invalid credentials');
+
   const correctPassword = await bcrypt.compare(password, user.password);
-  if (!correctPassword) throw new HttpError(401, 'Invalid credentials');
+  if (!correctPassword)
+    throw new HttpError(401, 'Invalid credentials');
 
   const { token: accessToken } = signAccessToken(user);
   const { token: refreshToken } = await issueRefreshToken(user);
@@ -90,15 +98,13 @@ export async function loginUser({ username, password }) {
 }
 
 export async function rotateRefreshToken(oldRefreshToken) {
-  if (!oldRefreshToken) throw new HttpError(401, 'No refresh token');
+  if (!oldRefreshToken)
+    throw new HttpError(401, 'No refresh token');
 
   const payload = verifyRefreshToken(oldRefreshToken);
-
   const stored = await RefreshToken.findOne({ jti: payload.jti });
-  if (!stored || stored.tokenHash !== hashToken(oldRefreshToken)) {
-    // Unknown jti OR hash mismatch
+  if (!stored || stored.tokenHash !== hashToken(oldRefreshToken))
     throw new HttpError(401, 'Invalid refresh token');
-  }
 
   let toRotateId = stored._id;
   let family = stored.family;
@@ -109,8 +115,11 @@ export async function rotateRefreshToken(oldRefreshToken) {
       await revokeFamily(stored.family);
       throw new HttpError(401, 'Refresh token reuse detected');
     }
+
     const active = await RefreshToken.findOne({ family: stored.family, revokedAt: null });
-    if (!active) throw new HttpError(401, 'Session closed');
+    if (!active)
+      throw new HttpError(401, 'Session closed');
+
     toRotateId = active._id;
     family = active.family;
   }
@@ -120,12 +129,13 @@ export async function rotateRefreshToken(oldRefreshToken) {
     { $set: { revokedAt: new Date() } },
     { returnDocument: 'after' }
   );
-  if (!claimed) {
+
+  if (!claimed)
     throw new HttpError(401, 'Refresh token already rotated');
-  }
 
   const user = await User.findById(claimed.userId);
-  if (!user) throw new HttpError(401, 'User no longer exists');
+  if (!user)
+    throw new HttpError(401, 'User no longer exists');
 
   const { token: newRefresh, jti: newJti } = await issueRefreshToken(user, family);
   claimed.replacedByJti = newJti;
@@ -145,6 +155,7 @@ export async function revokeSession({ accessJti, accessExp, refreshToken }) {
     );
     invalidateJti(accessJti);
   }
+
   if (refreshToken) {
     try {
       const payload = jwt.verify(refreshToken, config.jwtSecret, jwtVerifyOptions());

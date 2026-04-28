@@ -13,9 +13,12 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!dialog)
+      return;
+
     if (open) {
-      if (!dialog.open) dialog.showModal();
+      if (!dialog.open)
+        dialog.showModal();
     } else if (dialog.open) {
       dialog.close();
     }
@@ -35,20 +38,25 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
     onClose();
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting)
+      return;
+
     if (!file) {
       setError("Please choose a file to import.");
       return;
     }
+
     setError("");
     setSubmitting(true);
+
     try {
       const content = await file.text();
       await api.importDeck({ format, content });
-      if (onImported) onImported();
+
+      if (onImported)
+        onImported();
       onClose();
     } catch (err) {
       setError(err.message);

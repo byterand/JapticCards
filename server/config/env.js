@@ -7,6 +7,7 @@ function requireSecret(name, { allowShortInTest = false } = {}) {
   if (!value || value.trim() === '') {
     throw new Error(`[config] ${name} is not set. Refusing to start.`);
   }
+
   const isTest = process.env.NODE_ENV === 'test';
   if (!(isTest && allowShortInTest) && value.length < MIN_SECRET_LENGTH) {
     throw new Error(
@@ -14,6 +15,7 @@ function requireSecret(name, { allowShortInTest = false } = {}) {
       `Generate one with: openssl rand -base64 48`
     );
   }
+
   return value;
 }
 
@@ -23,7 +25,8 @@ export const config = {
   },
   get mongoUri() {
     const uri = process.env.MONGO_URI;
-    if (!uri) throw new Error('[config] MONGO_URI is not set.');
+    if (!uri)
+      throw new Error('[config] MONGO_URI is not set.');
     return uri;
   },
   get clientOrigin() {
@@ -31,14 +34,15 @@ export const config = {
   },
   get port() {
     const raw = process.env.PORT;
-    if (raw === undefined || raw === '') return 5000;
+    if (raw === undefined || raw === '')
+      return 5000;
+
     const parsed = Number.parseInt(raw, 10);
     return Number.isFinite(parsed) ? parsed : 5000;
   },
   get isProduction() {
     return process.env.NODE_ENV === 'production';
   },
-
   jwt: {
     issuer: 'japticcards',
     audience: 'japticcards-client',
