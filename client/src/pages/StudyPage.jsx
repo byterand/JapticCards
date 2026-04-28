@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
@@ -97,8 +97,6 @@ export default function StudyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
 
-  const startedRef = useRef(false);
-
   const current = session?.questions?.[index];
 
   // Reset per-card state when navigating between cards or starting a new session
@@ -109,8 +107,6 @@ export default function StudyPage() {
   }, [index, session?.sessionId]);
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
     let cancelled = false;
     (async () => {
       try {
