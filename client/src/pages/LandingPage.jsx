@@ -31,7 +31,7 @@ export default function LandingPage() {
       <section className={styles.hero}>
         <h2 className={styles.heroTitle}>A flashcard platform for classes and self-study</h2>
         <p className={styles.heroSub}>
-          Japtic Cards is a flashcard platform for self-study and classes. Build your own decks, study them in multiple modes, and track your progress per card &mdash; students can also work through decks assigned by their teachers.
+          Japtic Cards is a flashcard platform for self-study and classes. Build your own decks, study them in multiple modes, and track your progress per card.
         </p>
         <div className={styles.heroActions}>
           {loading ? null : user ? (
