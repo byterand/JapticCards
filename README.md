@@ -41,7 +41,44 @@ CLIENT_ORIGIN=http://localhost:3000
 VITE_API_URL=http://localhost:5000
 ```
 
-Make sure MongoDB is running locally. Atlas works too if you point `MONGO_URI` at it. Ensure that it has a replica set.
+### Running MongoDB as a replica set
+
+The server uses MongoDB transactions, which require a replica set even for local development. A single-node replica set is sufficient.
+
+Stop any standalone `mongod` instance first, then start `mongod` with the `--replSet` flag:
+
+```bash
+mongod --replSet rs0 --dbpath /path/to/your/db
+```
+
+On Windows, the equivalent looks like:
+
+```powershell
+mongod --replSet rs0 --dbpath "C:\data\db"
+```
+
+In a separate terminal, open the Mongo shell and initiate the replica set (only needs to be done once):
+
+```bash
+mongosh
+```
+
+```js
+rs.initiate()
+```
+
+After initiation, update `MONGO_URI` in `server/.env` to include the replica set name and direct connection flag:
+
+```
+MONGO_URI=mongodb://127.0.0.1:27017/japticcards?replicaSet=rs0&directConnection=true
+```
+
+If you're running MongoDB as a service (e.g. via Homebrew or `systemctl`), edit its config (`mongod.conf`) to add a `replication` block, then restart the service:
+
+```yaml
+replication:
+  replSetName: rs0
+```
 
 ## Running
 
@@ -74,25 +111,6 @@ To run them from their respective folders:
 cd server && npm start
 cd client && npm run dev
 ```
-
----
-
-## Testing
-
-Together:
-
-```bash
-npm test
-```
-
-Or individually:
-
-```bash
-cd server && npm test
-cd client && npm test
-```
-
-The server tests start up an in-memory MongoDB via `mongodb-memory-server` so no external database is needed.
 
 ---
 
