@@ -5,6 +5,8 @@ import {
   CARD_STATUS_VALUES
 } from '../utils/constants.js';
 
+const ANSWER_MAX = 144;
+
 export const startSessionRules = [
   body('deckId').notEmpty(),
   body('mode').optional().isIn(STUDY_MODE_VALUES),
@@ -18,8 +20,10 @@ export const shuffleRules = [
 
 export const answerRules = [
   body('cardId').notEmpty(),
-  body('answer').optional(),
-  body('selectedOption').optional(),
+  body('answer').optional().isString().trim()
+    .isLength({ max: ANSWER_MAX }).withMessage(`answer must be at most ${ANSWER_MAX} characters`),
+  body('selectedOption').optional().isString().trim()
+    .isLength({ max: ANSWER_MAX }).withMessage(`selectedOption must be at most ${ANSWER_MAX} characters`),
   body('isTrue').optional().isBoolean().withMessage('isTrue must be a boolean').toBoolean()
 ];
 

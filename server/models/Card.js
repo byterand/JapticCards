@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+const TEXT_MAX = 144;
+const TEXT_MAX_WITH_IMAGE = 72;
+
+function lengthForSide(imageField) {
+  return function (value) {
+    if (typeof value !== 'string')
+      return false;
+
+    const max = this[imageField] ? TEXT_MAX_WITH_IMAGE : TEXT_MAX;
+    return value.length <= max;
+  };
+}
+
 const cardSchema = new mongoose.Schema({
   deck: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,12 +28,20 @@ const cardSchema = new mongoose.Schema({
   front: {
     type: String,
     required: true,
-    maxLength: 500
+    maxLength: TEXT_MAX,
+    validate: {
+      validator: lengthForSide('frontImage'),
+      message: `Front must be at most ${TEXT_MAX} characters (${TEXT_MAX_WITH_IMAGE} when an image is included)`
+    }
   },
   back: {
     type: String,
     required: true,
-    maxLength: 2000
+    maxLength: TEXT_MAX,
+    validate: {
+      validator: lengthForSide('backImage'),
+      message: `Back must be at most ${TEXT_MAX} characters (${TEXT_MAX_WITH_IMAGE} when an image is included)`
+    }
   },
   frontImage: {
     type: String,

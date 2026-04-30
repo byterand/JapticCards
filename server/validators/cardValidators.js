@@ -1,8 +1,26 @@
 import { body } from 'express-validator';
 
-const FRONT_MAX = 500;
-const BACK_MAX = 2000;
+const TEXT_MAX = 144;
+const TEXT_MAX_WITH_IMAGE = 72;
 const IMAGE_URL_MAX = 2048;
+
+function imageConditionalLength(textField, imageField) {
+  return body(textField).custom((value, { req }) => {
+    if (value === undefined)
+      return true;
+
+    if (typeof value !== 'string')
+      throw new Error(`${textField} must be a string`);
+
+    const hasImage = typeof req.body[imageField] === 'string' && req.body[imageField].trim() !== '';
+    const max = hasImage ? TEXT_MAX_WITH_IMAGE : TEXT_MAX;
+
+    if (value.length > max)
+      throw new Error(`${textField} must be at most ${max} characters` + (hasImage ? ' when an image is included' : ''));
+
+    return true;
+  });
+}
 
 const imageRules = [
   body('frontImage').optional().isString().isLength({ max: IMAGE_URL_MAX }),
@@ -10,17 +28,17 @@ const imageRules = [
 ];
 
 export const cardRules = [
-  body('front').trim().notEmpty().isLength({ max: FRONT_MAX })
-    .withMessage(`Front must be 1-${FRONT_MAX} characters`),
-  body('back').trim().notEmpty().isLength({ max: BACK_MAX })
-    .withMessage(`Back must be 1-${BACK_MAX} characters`),
+  body('front').trim().notEmpty().withMessage('Front cannot be empty'),
+  body('back').trim().notEmpty().withMessage('Back cannot be empty'),
+  imageConditionalLength('front', 'frontImage'),
+  imageConditionalLength('back', 'backImage'),
   ...imageRules
 ];
 
 export const cardUpdateRules = [
-  body('front').optional().trim().notEmpty().isLength({ max: FRONT_MAX })
-    .withMessage(`Front must be 1-${FRONT_MAX} characters`),
-  body('back').optional().trim().notEmpty().isLength({ max: BACK_MAX })
-    .withMessage(`Back must be 1-${BACK_MAX} characters`),
+  body('front').optional().trim().notEmpty().withMessage('Front cannot be empty'),
+  body('back').optional().trim().notEmpty().withMessage('Back cannot be empty'),
+  imageConditionalLength('front', 'frontImage'),
+  imageConditionalLength('back', 'backImage'),
   ...imageRules
 ];
