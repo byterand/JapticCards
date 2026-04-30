@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { ROUTES } from "../constants";
+import { ROUTES, LIMITS } from "../constants";
 import styles from "./AuthForm.module.css";
 
 export default function AuthForm({ registerMode = false }) {
@@ -89,6 +89,7 @@ export default function AuthForm({ registerMode = false }) {
               autoComplete="username"
               autoFocus
               required
+              maxLength={LIMITS.USERNAME_MAX}
             />
           </label>
 
@@ -101,6 +102,7 @@ export default function AuthForm({ registerMode = false }) {
                 onChange={onChange(setPassword)}
                 autoComplete={registerMode ? "new-password" : "current-password"}
                 required
+                maxLength={LIMITS.PASSWORD_MAX}
               />
               <button
                 type="button"
@@ -122,6 +124,7 @@ export default function AuthForm({ registerMode = false }) {
                 onChange={onChange(setConfirmPassword)}
                 autoComplete="new-password"
                 required
+                maxLength={LIMITS.PASSWORD_MAX}
               />
             </label>
           )}

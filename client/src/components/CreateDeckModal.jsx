@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
-import { buildPath } from "../constants";
+import { buildPath, LIMITS } from "../constants";
 import styles from "./CreateDeckModal.module.css";
 
 export default function CreateDeckModal({ open, onClose, onCreated }) {
@@ -94,6 +94,7 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
+            maxLength={LIMITS.DECK_TITLE_MAX}
           />
         </label>
         <label className={styles.field}>
@@ -102,6 +103,7 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional"
+            maxLength={LIMITS.DECK_DESCRIPTION_MAX}
           />
         </label>
         <label className={styles.field}>
@@ -110,10 +112,11 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="e.g. Languages"
+            maxLength={LIMITS.DECK_CATEGORY_MAX}
           />
         </label>
         <label className={styles.field}>
-          <span>Tags (comma-separated)</span>
+          <span>Tags (comma-separated, up to {LIMITS.DECK_TAGS_MAX_COUNT})</span>
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}

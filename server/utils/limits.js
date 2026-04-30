@@ -1,0 +1,24 @@
+export const AUTH_LIMITS = {
+  USERNAME_MIN: 3,
+  USERNAME_MAX: 20,
+  PASSWORD_MIN: 8,
+  PASSWORD_MAX: 25
+};
+
+export const DECK_LIMITS = {
+  TITLE_MAX: 35,
+  DESCRIPTION_MAX: 100,
+  CATEGORY_MAX: 25,
+  TAG_MAX: 15,
+  TAGS_MAX_COUNT: 4
+};
+
+export const CARD_LIMITS = {
+  TEXT_MAX: 144,
+  TEXT_MAX_WITH_IMAGE: 72,
+  IMAGE_URL_MAX: 2048
+};
+
+export const STUDY_LIMITS = {
+  ANSWER_MAX: 144
+};

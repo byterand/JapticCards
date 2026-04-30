@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, imageUrl } from "../services/api";
 import FileButton from "./FileButton";
+import { LIMITS } from "../constants";
 import styles from "./AddCardModal.module.css";
 
 const EMPTY_IMAGE = { url: "", name: "", uploading: false };
@@ -126,6 +127,9 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
     }
   };
 
+  const frontMax = (frontImage.url || frontImage.name) ? LIMITS.CARD_TEXT_MAX_WITH_IMAGE : LIMITS.CARD_TEXT_MAX;
+  const backMax = (backImage.url || backImage.name) ? LIMITS.CARD_TEXT_MAX_WITH_IMAGE : LIMITS.CARD_TEXT_MAX;
+
   return (
     <dialog
       ref={dialogRef}
@@ -144,6 +148,7 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
             value={front}
             onChange={(e) => setFront(e.target.value)}
             required
+            maxLength={frontMax}
           />
         </label>
         <label className={styles.field}>
@@ -153,6 +158,7 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
             value={back}
             onChange={(e) => setBack(e.target.value)}
             required
+            maxLength={backMax}
           />
         </label>
 

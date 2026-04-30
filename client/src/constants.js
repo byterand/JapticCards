@@ -1,6 +1,22 @@
 // Centralized string constants shared across the client.
 // Keep these in sync with the backend validators (server/validators/*).
 
+// Mirror of server/utils/limits.js, keep the values in sync
+export const LIMITS = {
+  USERNAME_MIN: 3,
+  USERNAME_MAX: 20,
+  PASSWORD_MIN: 8,
+  PASSWORD_MAX: 25,
+  DECK_TITLE_MAX: 35,
+  DECK_DESCRIPTION_MAX: 100,
+  DECK_CATEGORY_MAX: 25,
+  DECK_TAG_MAX: 15,
+  DECK_TAGS_MAX_COUNT: 4,
+  CARD_TEXT_MAX: 144,
+  CARD_TEXT_MAX_WITH_IMAGE: 72,
+  STUDY_ANSWER_MAX: 144
+};
+
 export const STUDY_MODES = {
   FLIP: "flip",
   MULTIPLE_CHOICE: "multiple_choice",

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { AUTH_LIMITS } from '../utils/limits.js';
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -6,8 +7,8 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
-    minLength: 3,
-    maxLength: 20,
+    minLength: AUTH_LIMITS.USERNAME_MIN,
+    maxLength: AUTH_LIMITS.USERNAME_MAX,
     match: /^[a-z0-9_]+$/
   },
   password: {

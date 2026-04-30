@@ -10,6 +10,7 @@ import {
   STUDY_MODES,
   STUDY_MODE_VALUES,
   STUDY_MODE_LABELS,
+  LIMITS,
   buildPath,
   formatAccuracyPct
 } from "../constants";
@@ -171,6 +172,7 @@ function WrittenAnswer({ current, typedAnswer, setTypedAnswer, onAnswer, disable
           disabled={disabled}
           placeholder="Type your answer…"
           autoFocus
+          maxLength={LIMITS.STUDY_ANSWER_MAX}
         />
         <button type="submit" className="btn btn-primary" disabled={disabled || !typedAnswer.trim()}>
           Submit

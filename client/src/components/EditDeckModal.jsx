@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
+import { LIMITS } from "../constants";
 import styles from "./EditDeckModal.module.css";
 
 export default function EditDeckModal({ open, deck, onClose, onSaved }) {
@@ -87,6 +88,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
+            maxLength={LIMITS.DECK_TITLE_MAX}
           />
         </label>
         <label className={styles.field}>
@@ -94,6 +96,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            maxLength={LIMITS.DECK_DESCRIPTION_MAX}
           />
         </label>
         <label className={styles.field}>
@@ -101,10 +104,11 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+            maxLength={LIMITS.DECK_CATEGORY_MAX}
           />
         </label>
         <label className={styles.field}>
-          <span>Tags (comma-separated)</span>
+          <span>Tags (comma-separated, up to {LIMITS.DECK_TAGS_MAX_COUNT})</span>
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}

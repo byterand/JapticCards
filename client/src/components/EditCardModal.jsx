@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, imageUrl } from "../services/api";
 import FileButton from "./FileButton";
-import { CARD_SIDES } from "../constants";
+import { CARD_SIDES, LIMITS } from "../constants";
 import styles from "./EditCardModal.module.css";
 
 const EMPTY_IMAGE = { url: "", name: "", uploading: false };
@@ -158,6 +158,7 @@ export default function EditCardModal({
             value={text}
             onChange={(e) => setText(e.target.value)}
             required
+            maxLength={(image.url || image.name) ? LIMITS.CARD_TEXT_MAX_WITH_IMAGE : LIMITS.CARD_TEXT_MAX}
           />
         </label>
 
