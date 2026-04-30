@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
@@ -216,7 +216,23 @@ export default function StudyPage() {
   const [flipped, setFlipped] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [cardFeedback, setCardFeedback] = useState({});
-  const [stats, setStats] = useState(null);
+
+  const stats = useMemo(() => {
+    const entries = Object.values(cardFeedback);
+    const totalAttempts = entries.length;
+    if (!totalAttempts)
+      return null;
+
+    const correctCount = entries.filter((e) => e.isCorrect).length;
+    return {
+      cardsStudied: totalAttempts,
+      totalAttempts,
+      correctCount,
+      incorrectCount: totalAttempts - correctCount,
+      accuracyRate: correctCount / totalAttempts
+    };
+  }, [cardFeedback]);
+
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
@@ -309,8 +325,6 @@ export default function StudyPage() {
         }
       }));
       if (res.completed) setSessionDone(true);
-      const statRes = await api.getStats(id);
-      setStats(statRes);
     } catch (err) {
       if (currentCardIdRef.current === submittedCardId) {
         setError(err.message);

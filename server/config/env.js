@@ -50,7 +50,6 @@ export const config = {
     accessTtlSeconds: 15 * 60,
     refreshTtlSeconds: 7 * 24 * 60 * 60,
     clockToleranceSeconds: 5,
-    refreshGraceSeconds: 10,
     revocationCacheSeconds: 10
   }
 };

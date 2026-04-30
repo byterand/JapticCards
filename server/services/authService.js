@@ -106,26 +106,13 @@ export async function rotateRefreshToken(oldRefreshToken) {
   if (!stored || stored.tokenHash !== hashToken(oldRefreshToken))
     throw new HttpError(401, 'Invalid refresh token');
 
-  let toRotateId = stored._id;
-  let family = stored.family;
   if (stored.revokedAt) {
-    const graceMs = config.jwt.refreshGraceSeconds * 1000;
-    const withinGrace = Date.now() - stored.revokedAt.getTime() <= graceMs;
-    if (!withinGrace) {
-      await revokeFamily(stored.family);
-      throw new HttpError(401, 'Refresh token reuse detected');
-    }
-
-    const active = await RefreshToken.findOne({ family: stored.family, revokedAt: null });
-    if (!active)
-      throw new HttpError(401, 'Session closed');
-
-    toRotateId = active._id;
-    family = active.family;
+    await revokeFamily(stored.family);
+    throw new HttpError(401, 'Refresh token reuse detected');
   }
 
   const claimed = await RefreshToken.findOneAndUpdate(
-    { _id: toRotateId, revokedAt: null },
+    { _id: stored._id, revokedAt: null },
     { $set: { revokedAt: new Date() } },
     { returnDocument: 'after' }
   );
@@ -137,7 +124,7 @@ export async function rotateRefreshToken(oldRefreshToken) {
   if (!user)
     throw new HttpError(401, 'User no longer exists');
 
-  const { token: newRefresh, jti: newJti } = await issueRefreshToken(user, family);
+  const { token: newRefresh, jti: newJti } = await issueRefreshToken(user, stored.family);
   claimed.replacedByJti = newJti;
   await claimed.save();
 
