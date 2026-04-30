@@ -34,7 +34,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
       setTitle(deck.title || "");
       setDescription(deck.description || "");
       setCategory(deck.category || "");
-      setTags(Array.isArray(deck.tags) ? deck.tags.map((t) => t.toLowerCase()).join(", ") : "");
+      setTags(Array.isArray(deck.tags) ? deck.tags.join(", ") : "");
       setError("");
       setSubmitting(false);
     }

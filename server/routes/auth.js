@@ -23,7 +23,7 @@ function setRefreshCookie(res, token) {
 }
 
 function clearRefreshCookie(res) {
-  res.clearCookie(REFRESH_COOKIE_NAME, { ...refreshCookieOptions(), maxAge: 0 });
+  res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
 }
 
 function readRefreshToken(req) {

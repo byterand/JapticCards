@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
-import { api, imageUrl } from "../services/api";
+import { api } from "../services/api";
 import {
   CARD_SIDES,
   CARD_SIDE_VALUES,
@@ -135,7 +135,7 @@ function TrueFalse({ current, selected, feedback, onAnswer, disabled }) {
         type="button"
         className={`${styles.tfTile} ${baseClass} ${tone} ${isDimmed ? styles.tfDimmed : ""}`}
         disabled={disabled}
-        onClick={() => onAnswer({ answer: current.statement, isTrue: value }, value)}
+        onClick={() => onAnswer({ isTrue: value }, value)}
       >
         <span className={styles.tfIcon} aria-hidden="true">{icon}</span>
         <span>{label}</span>
@@ -303,7 +303,6 @@ export default function StudyPage() {
   const submitAnswer = useCallback(async (payload, selectedDisplay) => {
     if (!session || !current || submitting || answered) return;
     const submittedCardId = current.cardId;
-    const submittedKey = String(submittedCardId);
     setSubmitting(true);
     setError("");
     try {
@@ -313,7 +312,7 @@ export default function StudyPage() {
       });
       setCardFeedback((m) => ({
         ...m,
-        [submittedKey]: {
+        [String(submittedCardId)]: {
           isCorrect: res.isCorrect,
           expected: res.expected,
           selected: selectedDisplay

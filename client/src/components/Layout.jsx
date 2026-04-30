@@ -19,18 +19,16 @@ export default function Layout({ children }) {
         </div>
         <nav>
           {user ? (
-            <>
-              <button
-                type="button"
-                className="btn"
-                onClick={async () => {
-                  await logout();
-                  navigate(ROUTES.LANDING);
-                }}
-              >
-                Logout
-              </button>
-            </>
+            <button
+              type="button"
+              className="btn"
+              onClick={async () => {
+                await logout();
+                navigate(ROUTES.LANDING);
+              }}
+            >
+              Logout
+            </button>
           ) : (
             <>
               <Link to={ROUTES.LOGIN} className="btn">Login</Link>

@@ -7,11 +7,10 @@ import AddCardModal from "../components/AddCardModal";
 import EditDeckModal from "../components/EditDeckModal";
 import useConfirm from "../hooks/useConfirm";
 import { api } from "../services/api";
+import { downloadDeckExport } from "../utils/downloadDeckExport";
 import {
   CARD_SIDES,
   CARD_SIDE_LABELS,
-  CONTENT_TYPE_BY_FORMAT,
-  CONTENT_TYPES,
   STUDY_MODES,
   STUDY_MODE_LABELS,
   buildPath,
@@ -80,18 +79,7 @@ export default function DeckPage() {
   const handleExport = async (format) => {
     setError("");
     try {
-      const content = await api.exportDeck(deck._id, format);
-      const blobType = CONTENT_TYPE_BY_FORMAT[format] || CONTENT_TYPES.JSON;
-      const blob = new Blob([content], { type: blobType });
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-
-      anchor.href = url;
-      anchor.download = `${deck.title || "deck"}.${format}`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      window.URL.revokeObjectURL(url);
+      await downloadDeckExport(deck, format);
     } catch (err) {
       setError(err.message);
     }

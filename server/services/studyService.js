@@ -235,13 +235,13 @@ export async function submitAnswer(user, sessionId, payload) {
 }
 
 export async function setCardStatus(user, deckId, cardId, status) {
-  const card = await Card.findById(cardId);
-  if (!card || !sameId(card.deck, deckId))
-    throw new HttpError(404, 'Card not found');
-
-  const access = await getAccessibleDeckLean(user, card.deck);
+  const access = await getAccessibleDeckLean(user, deckId);
   if (!access)
     throw new HttpError(404, 'Deck not found');
+
+  const card = await Card.findById(cardId).select('_id deck');
+  if (!card || !sameId(card.deck, deckId))
+    throw new HttpError(404, 'Card not found');
 
   return CardProgress.findOneAndUpdate(
     { user: user.userId, card: card._id },
