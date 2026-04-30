@@ -28,16 +28,16 @@ const imageRules = [
 ];
 
 export const cardRules = [
-  body('front').trim().notEmpty().withMessage('Front cannot be empty'),
-  body('back').trim().notEmpty().withMessage('Back cannot be empty'),
-  imageConditionalLength('front', 'frontImage'),
-  imageConditionalLength('back', 'backImage'),
+  body('front').trim().notEmpty().withMessage('Front text cannot be empty'),
+  body('back').trim().notEmpty().withMessage('Back text cannot be empty'),
+  imageConditionalLength('Front text', 'frontImage'),
+  imageConditionalLength('Back text', 'backImage'),
   ...imageRules
 ];
 
 export const cardUpdateRules = [
-  body('front').optional().trim().notEmpty().withMessage('Front cannot be empty'),
-  body('back').optional().trim().notEmpty().withMessage('Back cannot be empty'),
+  body('front').optional().trim().notEmpty().withMessage('Front text cannot be empty'),
+  body('back').optional().trim().notEmpty().withMessage('Back text cannot be empty'),
   imageConditionalLength('front', 'frontImage'),
   imageConditionalLength('back', 'backImage'),
   ...imageRules
