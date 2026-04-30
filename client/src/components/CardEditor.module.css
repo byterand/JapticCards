@@ -10,6 +10,15 @@
   display: flex;
   gap: 0.3rem;
   z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.scene:hover .actions,
+.scene:focus-within .actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .iconBtn {

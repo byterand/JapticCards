@@ -9,17 +9,26 @@ const deckSchema = new mongoose.Schema({
   },
   title: {
     type: String,
-    required: true
+    required: true,
+    maxLength: 35
   },
   description: {
     type: String,
-    default: ''
+    default: '',
+    maxLength: 100
   },
   category: {
     type: String,
-    default: ''
+    default: '',
+    maxLength: 25
   },
-  tags: [{ type: String }],
+  tags: {
+    type: [{ type: String, maxLength: 15 }],
+    validate: {
+      validator: (v) => !Array.isArray(v) || v.length <= 4,
+      message: 'At most 4 tags allowed'
+    }
+  },
   cardCounter: { type: Number, default: 0 }
 }, { timestamps: true });
 
