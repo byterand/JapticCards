@@ -24,15 +24,6 @@ async function findCardInDeck(cardId, deckId) {
 }
 
 async function reserveNextOrder(deckId) {
-  const existing = await Deck.findOne({ _id: deckId }).select('cardCounter').lean();
-  if (typeof existing?.cardCounter !== 'number') {
-    const initialCount = await Card.countDocuments({ deck: deckId });
-    await Deck.updateOne(
-      { _id: deckId, cardCounter: { $exists: false } },
-      { $set: { cardCounter: initialCount } }
-    );
-  }
-
   const reserved = await Deck.findOneAndUpdate(
     { _id: deckId },
     { $inc: { cardCounter: 1 } },

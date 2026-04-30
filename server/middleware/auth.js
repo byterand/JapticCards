@@ -72,7 +72,7 @@ export async function optionalVerifyToken(req, res, next) {
       attachUser(req, decoded, token);
     }
   } catch {
-    // Invalid/expired token is acceptable here — just proceed unauthenticated.
+    // Invalid/expired token is acceptable here, just proceed unauthenticated.
   }
 
   return next();

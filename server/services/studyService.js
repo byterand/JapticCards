@@ -3,6 +3,7 @@ import StudySession from '../models/StudySession.js';
 import CardProgress from '../models/CardProgress.js';
 import { getAccessibleDeckLean } from './accessService.js';
 import { shuffleArray } from '../utils/shuffle.js';
+import { withTransaction } from '../utils/transaction.js';
 import { HttpError } from '../utils/HttpError.js';
 import { STUDY_MODES, CARD_STATUS, CARD_SIDES } from '../utils/constants.js';
 
@@ -64,7 +65,7 @@ function buildQuestionForMode(mode, card, distractorPool) {
         persisted: { cardId: card._id }
       };
     default:
-      // STUDY_MODES.FLIP — client gets full card; server persists only id.
+      // STUDY_MODES.FLIP: client gets full card; server persists only id.
       return {
         clientView: {
           cardId: card._id,
@@ -192,39 +193,41 @@ export async function submitAnswer(user, sessionId, payload) {
   const question = session.questions?.find((q) => sameId(q.cardId, payload.cardId));
   const isCorrect = grader({ question, payload, card });
 
-  const claimed = await StudySession.findOneAndUpdate(
-    { _id: sessionId, user: user.userId, answeredCardIds: { $ne: card._id } },
-    { $addToSet: { answeredCardIds: card._id } },
-    { returnDocument: 'after', projection: { answeredCardIds: 1, originalCardOrder: 1, completed: 1 } }
-  );
+  const total = session.originalCardOrder.length;
+  let progress;
+  let completed = false;
+  await withTransaction(async (txnSession) => {
+    const claimed = await StudySession.findOneAndUpdate(
+      { _id: sessionId, user: user.userId, answeredCardIds: { $ne: card._id } },
+      { $addToSet: { answeredCardIds: card._id } },
+      { returnDocument: 'after', projection: { answeredCardIds: 1, completed: 1 }, session: txnSession }
+    );
 
-  if (!claimed)
-    throw new HttpError(409, 'Card already answered in this session');
+    if (!claimed)
+      throw new HttpError(409, 'Card already answered in this session');
 
-  const progress = await CardProgress.findOneAndUpdate(
-    { user: user.userId, card: card._id },
-    {
-      $setOnInsert: { status: CARD_STATUS.STILL_LEARNING },
-      $inc: {
-        correctCount: isCorrect ? 1 : 0,
-        incorrectCount: isCorrect ? 0 : 1
-      }
-    },
-    { upsert: true, returnDocument: 'after' }
-  );
+    progress = await CardProgress.findOneAndUpdate(
+      { user: user.userId, card: card._id },
+      {
+        $setOnInsert: { status: CARD_STATUS.STILL_LEARNING },
+        $inc: {
+          correctCount: isCorrect ? 1 : 0,
+          incorrectCount: isCorrect ? 0 : 1
+        }
+      },
+      { upsert: true, returnDocument: 'after', session: txnSession }
+    );
 
-  let completed = Boolean(claimed.completed);
-  if (!completed) {
-    const total = claimed.originalCardOrder?.length || 0;
-    const answered = claimed.answeredCardIds?.length || 0;
-    if (total > 0 && answered >= total) {
+    completed = Boolean(claimed.completed);
+    if (!completed && total > 0 && (claimed.answeredCardIds?.length || 0) >= total) {
       await StudySession.updateOne(
-        { _id: sessionId, user: user.userId, completed: false },
-        { $set: { completed: true } }
+        { _id: sessionId, completed: false },
+        { $set: { completed: true } },
+        { session: txnSession }
       );
       completed = true;
     }
-  }
+  });
 
   return {
     isCorrect,

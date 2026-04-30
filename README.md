@@ -130,7 +130,7 @@ cd client && npm run dev
 **Decks**
 - CRUD with title, description, category, and tags.
 - Search and category filter on the dashboard.
-- JSON and CSV import/export — the primary mechanism for sharing decks between accounts.
+- JSON and CSV import/export, the primary mechanism for sharing decks between accounts.
 - Cascade on deletion (cards, per-user progress, study sessions).
 
 **Cards**
