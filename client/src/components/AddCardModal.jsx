@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { api, imageUrl } from "../services/api";
+import { api } from "../services/api";
+import { imageUrl } from "../services/images";
 import FileButton from "./FileButton";
 import { LIMITS } from "../constants";
+import useDialog from "../hooks/useDialog";
 import styles from "./AddCardModal.module.css";
 
 const EMPTY_IMAGE = { url: "", name: "", uploading: false };
@@ -24,18 +26,7 @@ export default function AddCardModal({ open, deckId, onClose, onAdded }) {
 
   const pendingUploadsRef = useRef(new Set());
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open) dialog.showModal();
-      queueMicrotask(() => frontRef.current?.focus());
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef, frontRef);
 
   // Reset when reopened so a new card starts fresh.
   useEffect(() => {

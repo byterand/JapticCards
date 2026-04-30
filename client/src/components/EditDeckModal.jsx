@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import { LIMITS } from "../constants";
+import useDialog from "../hooks/useDialog";
 import styles from "./EditDeckModal.module.css";
 
 export default function EditDeckModal({ open, deck, onClose, onSaved }) {
@@ -14,19 +15,7 @@ export default function EditDeckModal({ open, deck, onClose, onSaved }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open)
-        dialog.showModal();
-      queueMicrotask(() => titleRef.current?.focus());
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef, titleRef);
 
   // Seed inputs from the deck whenever the modal opens.
   useEffect(() => {

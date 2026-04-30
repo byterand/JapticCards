@@ -2,19 +2,6 @@ import { CONTENT_TYPES } from "../constants";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export function imageUrl(value) {
-  if (!value)
-    return "";
-
-  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://"))
-    return value;
-
-  if (value.startsWith("/"))
-    return `${BASE_URL}${value}`;
-
-  return value;
-}
-
 // Access token lives in memory only. Refresh token is delivered via an
 // httpOnly cookie and travels with credentials: "include".
 let accessToken = null;
@@ -33,7 +20,7 @@ function isJsonResponse(res) {
   return res.headers.get("content-type")?.includes(CONTENT_TYPES.JSON) ?? false;
 }
 
-async function refreshAccessToken() {
+function refreshAccessToken() {
   if (refreshPromise)
     return refreshPromise;
 
@@ -52,13 +39,9 @@ async function refreshAccessToken() {
     const data = await res.json();
     accessToken = data.token;
     return data;
-  })();
+  })().finally(() => { refreshPromise = null; });
 
-  try {
-    return await refreshPromise;
-  } finally {
-    refreshPromise = null;
-  }
+  return refreshPromise;
 }
 
 async function doFetch(path, options, { retry = true } = {}) {

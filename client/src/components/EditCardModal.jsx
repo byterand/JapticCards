@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { api, imageUrl } from "../services/api";
+import { api } from "../services/api";
+import { imageUrl } from "../services/images";
 import FileButton from "./FileButton";
 import { CARD_SIDES, LIMITS } from "../constants";
+import useDialog from "../hooks/useDialog";
 import styles from "./EditCardModal.module.css";
 
 const EMPTY_IMAGE = { url: "", name: "", uploading: false };
@@ -39,19 +41,7 @@ export default function EditCardModal({
 
   const pendingUploadsRef = useRef(new Set());
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open)
-        dialog.showModal();
-      queueMicrotask(() => textRef.current?.focus());
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef, textRef);
 
   // Seed from the requested side whenever we open or the side changes.
   useEffect(() => {

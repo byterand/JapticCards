@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { buildPath, LIMITS } from "../constants";
+import useDialog from "../hooks/useDialog";
 import styles from "./CreateDeckModal.module.css";
 
 export default function CreateDeckModal({ open, onClose, onCreated }) {
@@ -15,19 +16,7 @@ export default function CreateDeckModal({ open, onClose, onCreated }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open)
-        dialog.showModal();
-      queueMicrotask(() => titleRef.current?.focus());
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef, titleRef);
 
   // Reset form whenever the modal opens fresh
   useEffect(() => {

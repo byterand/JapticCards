@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { api } from "../services/api";
+import { imageUrl } from "../services/images";
 import {
   CARD_SIDES,
   CARD_SIDE_VALUES,
@@ -219,7 +220,6 @@ export default function StudyPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sessionDone, setSessionDone] = useState(false);
-  const [suppressFlipAnim, setSuppressFlipAnim] = useState(false);
   const [statusByCard, setStatusByCard] = useState({});
 
   const current = session?.questions?.[index];
@@ -262,21 +262,11 @@ export default function StudyPage() {
 
   const goPrev = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
-    setSuppressFlipAnim(true);
   }, []);
 
   const goNext = useCallback(() => {
     setIndex((i) => Math.min(total - 1, i + 1));
-    setSuppressFlipAnim(true);
   }, [total]);
-
-  useEffect(() => {
-    if (!suppressFlipAnim) return undefined;
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setSuppressFlipAnim(false));
-    });
-    return () => cancelAnimationFrame(id);
-  }, [suppressFlipAnim, index]);
 
   const flip = useCallback(() => {
     setFlipped((f) => !f);
@@ -375,12 +365,14 @@ export default function StudyPage() {
     const disabled = submitting || answered;
     switch (mode) {
       case STUDY_MODES.FLIP:
+        // key on cardId so FlipCard remounts when navigating — fresh DOM
+        // means no leftover transition from the previous card's flipped state.
         return (
           <FlipCard
+            key={current.cardId}
             current={current}
             sideFirst={sideFirst}
             flipped={flipped}
-            suppressAnim={suppressFlipAnim}
             onFlip={flip}
           />
         );

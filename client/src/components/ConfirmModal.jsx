@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import styles from "./ConfirmModal.module.css";
+import useDialog from "../hooks/useDialog";
 
 export default function ConfirmModal({
   open,
@@ -14,19 +15,7 @@ export default function ConfirmModal({
   const dialogRef = useRef(null);
   const confirmBtnRef = useRef(null);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open)
-        dialog.showModal();
-      queueMicrotask(() => confirmBtnRef.current?.focus());
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef, confirmBtnRef);
 
   const handleCancelEvent = (e) => {
     e.preventDefault();

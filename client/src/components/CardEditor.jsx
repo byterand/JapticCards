@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { api, imageUrl } from "../services/api";
+import { api } from "../services/api";
+import { imageUrl } from "../services/images";
 import useConfirm from "../hooks/useConfirm";
 import EditCardModal from "./EditCardModal";
 import { CARD_SIDES } from "../constants";

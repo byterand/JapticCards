@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 import { EXPORT_FORMATS } from "../constants";
+import useDialog from "../hooks/useDialog";
 import FileButton from "./FileButton";
 import styles from "./ImportDeckModal.module.css";
 
@@ -11,18 +12,7 @@ export default function ImportDeckModal({ open, onClose, onImported }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog)
-      return;
-
-    if (open) {
-      if (!dialog.open)
-        dialog.showModal();
-    } else if (dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useDialog(open, dialogRef);
 
   useEffect(() => {
     if (open) {
